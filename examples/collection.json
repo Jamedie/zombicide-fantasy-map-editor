@@ -1,0 +1,9 @@
+{
+  "format": "zombicide-collection",
+  "version": 1,
+  "name": "Ma collection",
+  "ownedProducts": ["black-plague", "wulfsburg"],
+  "tileWhitelist": [],
+  "tileBlacklist": []
+}
+

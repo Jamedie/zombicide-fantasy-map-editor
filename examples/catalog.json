@@ -1,0 +1,40 @@
+{
+  "format": "zombicide-catalog",
+  "version": 2,
+  "source": "https://zombicide.fandom.com/wiki/Fantasy_Tiles",
+  "slotPolicy": { "doorPlacement": "anchor-required", "otherPlacement": "catalog-preferred", "freeDoorCoordinates": false },
+  "tiles": [
+    {
+      "id": "1r",
+      "code": "1R",
+      "product": "black-plague",
+      "face": "R",
+      "image": "assets/tiles/1R.webp",
+      "slots": [
+        { "id": "1r-door-01", "type": "door", "orientation": "horizontal", "x": 0.5, "y": 0.02 },
+        { "id": "1r-door-02", "type": "door", "orientation": "vertical", "x": 0.98, "y": 0.5 },
+        { "id": "1r-objective-01", "type": "objective", "x": 0.52, "y": 0.55 },
+        { "id": "1r-chi-01", "type": "chi", "x": 0.2, "y": 0.72 }
+      ],
+      "doorAnchors": [
+        { "id": "1r-door-01", "type": "door", "orientation": "horizontal", "x": 0.5, "y": 0.02 },
+        { "id": "1r-door-02", "type": "door", "orientation": "vertical", "x": 0.98, "y": 0.5 }
+      ]
+    },
+    {
+      "id": "8v",
+      "code": "8V",
+      "product": "black-plague",
+      "face": "V",
+      "image": "assets/tiles/8V.webp",
+      "slots": [
+        { "id": "8v-door-01", "type": "door", "orientation": "vertical", "x": 0.02, "y": 0.25 },
+        { "id": "8v-objective-01", "type": "objective", "x": 0.5, "y": 0.5 },
+        { "id": "8v-statue-01", "type": "statue", "x": 0.65, "y": 0.42 }
+      ],
+      "doorAnchors": [
+        { "id": "8v-door-01", "type": "door", "orientation": "vertical", "x": 0.02, "y": 0.25 }
+      ]
+    }
+  ]
+}

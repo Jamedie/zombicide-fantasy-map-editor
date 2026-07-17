@@ -3,66 +3,115 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Atelier de cartes Zombicide</title>
+    <title>Forge de Quêtes — Zombicide Fantasy</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="slot-selection.css" />
   </head>
   <body>
     <header class="topbar">
-      <div>
-        <p class="eyebrow">ÉDITEUR DE CAMPAGNE</p>
-        <h1>Atelier de cartes Zombicide</h1>
+      <div class="brand">
+        <span class="brand-mark">Z</span>
+        <div><p class="eyebrow">ZOMBICIDE FANTASY</p><h1>Forge de Quêtes</h1></div>
+        <span class="mvp-badge">MVP</span>
       </div>
       <div class="document-actions">
-        <button id="new-map" class="secondary">Nouvelle carte</button>
-        <label class="button secondary" for="import-file">Importer JSON</label>
-        <input id="import-file" type="file" accept="application/json" hidden />
-        <button id="export-json" class="secondary">Exporter JSON</button>
-        <button id="export-image" class="primary">Exporter JPEG</button>
+        <button id="new-map" class="ghost">Nouveau</button>
+        <label class="button ghost" for="import-mission">Ouvrir</label>
+        <input id="import-mission" type="file" accept="application/json,.json" hidden />
+        <button id="export-json" class="ghost">Mission JSON</button>
+        <button id="export-image" class="primary">Exporter PNG</button>
       </div>
     </header>
 
-    <main class="layout">
-      <aside class="panel library-panel">
-        <section>
-          <h2>Tuiles</h2>
-          <p class="hint">Glissez une tuile sur le plateau, ou cliquez pour l'ajouter.</p>
+    <div id="warning-bar" class="warning-bar" hidden></div>
+
+    <main class="app-shell">
+      <aside class="sidebar left-sidebar">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="tiles">Tuiles</button>
+          <button class="tab" data-tab="markers">Marqueurs</button>
+          <button class="tab" data-tab="collection">Collection</button>
+        </div>
+
+        <section class="tab-panel active" data-panel="tiles">
+          <div class="panel-title"><div><p class="kicker">BIBLIOTHÈQUE</p><h2>Tuiles disponibles</h2></div><span id="tile-count" class="count"></span></div>
+          <p class="panel-help">Cliquez pour ajouter dans la première case libre, ou glissez vers une case précise.</p>
+          <div class="search-wrap"><span>⌕</span><input id="tile-search" type="search" placeholder="Numéro, boîte ou face…" /></div>
+          <label class="check-row"><input id="show-unavailable" type="checkbox" /> Afficher les indisponibles</label>
           <div id="tile-library" class="tile-library"></div>
+          <label class="import-tile" for="import-tile-images"><span>＋</span><strong>Importer des visuels</strong><small>PNG ou JPEG — ajoutés au catalogue local</small></label>
+          <input id="import-tile-images" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden />
         </section>
-        <section>
-          <h2>Marqueurs</h2>
-          <p class="hint">Ajoutez-les puis déplacez-les directement sur une tuile.</p>
+
+        <section class="tab-panel" data-panel="markers">
+          <div class="panel-title"><div><p class="kicker">PALETTE</p><h2>Marqueurs de mission</h2></div></div>
+          <p class="panel-help">Cliquez sur un marqueur pour le poser au centre de la première tuile. Déplacez-le ensuite librement.</p>
           <div id="marker-library" class="marker-library"></div>
+          <div class="tip"><strong>Portes aimantées</strong><span>Les portes s’accrochent aux points définis dans l’éditeur de tuiles de l’onglet Collection.</span></div>
+        </section>
+
+        <section class="tab-panel" data-panel="collection">
+          <div class="panel-title"><div><p class="kicker">PROFIL</p><h2>Ma collection</h2></div></div>
+          <div class="profile-row"><select id="profile-select"></select><button id="new-profile" title="Nouveau profil">＋</button><button id="delete-profile" title="Supprimer le profil">×</button></div>
+          <p class="panel-help">Les boîtes cochées rendent leurs tuiles disponibles. Les exceptions ont priorité.</p>
+          <div id="product-list" class="product-list"></div>
+          <div class="collection-actions">
+            <button id="reset-exceptions" class="ghost">Réinitialiser les exceptions</button>
+            <button id="export-collection" class="ghost">Exporter</button>
+            <label class="button ghost" for="import-collection">Importer</label>
+            <input id="import-collection" type="file" accept="application/json,.json" hidden />
+          </div>
+          <div class="priority-note"><strong>Priorité</strong><span>Liste noire → liste blanche → boîtes possédées</span></div>
+          <a class="catalog-page-link" href="catalog.html"><span>⌑</span><div><strong>Ouvrir l’éditeur de catalogue</strong><small>Configurer les slots autorisés pour chaque tuile</small></div><b>→</b></a>
         </section>
       </aside>
 
       <section class="workspace">
-        <div class="map-toolbar">
-          <label>Nom de la mission <input id="map-title" value="Nouvelle mission" maxlength="70" /></label>
-          <span id="selection-label" class="selection-label">Aucune sélection</span>
-          <button id="delete-selected" class="danger" disabled>Supprimer</button>
+        <div class="mission-toolbar">
+          <label class="mission-name"><span>MISSION</span><input id="mission-name" value="Nouvelle quête" maxlength="70" /></label>
+          <div class="toolbar-divider"></div>
+          <label>Colonnes <select id="grid-columns"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
+          <label>Lignes <select id="grid-rows"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+          <button id="zoom-out" class="icon-button" title="Dézoomer">−</button><span id="zoom-label">85%</span><button id="zoom-in" class="icon-button" title="Zoomer">＋</button>
         </div>
-        <div id="board" class="board" aria-label="Plateau de mission"></div>
-        <p class="board-help">Astuce : cliquez sur une tuile ou un marqueur pour le sélectionner, puis utilisez les flèches du clavier pour un ajustement précis.</p>
+
+        <div class="canvas-scroller">
+          <div id="board-wrap" class="board-wrap">
+            <div id="board" class="board" aria-label="Plateau de mission"></div>
+          </div>
+        </div>
+        <div class="statusbar"><span id="mission-status">Mission vide</span><span id="placement-status">Cliquez une case vide pour la cibler • Sans cible, la première case libre est utilisée</span></div>
       </section>
 
-      <aside class="panel inspector">
-        <h2>Propriétés</h2>
-        <div id="empty-inspector" class="empty-state">Sélectionnez un élément sur le plateau pour le configurer.</div>
-        <form id="properties-form" hidden>
-          <label>Type <input id="property-type" disabled /></label>
-          <label id="label-field">Libellé <input id="property-label" maxlength="12" /></label>
-          <label id="tile-code-field" hidden>Référence <input id="property-code" maxlength="8" /></label>
-          <label>Position X <input id="property-x" type="number" step="1" /></label>
-          <label>Position Y <input id="property-y" type="number" step="1" /></label>
-          <label id="rotation-field" hidden>Rotation
-            <select id="property-rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>
-          </label>
-          <button class="secondary" id="duplicate-selected" type="button">Dupliquer</button>
-        </form>
+      <aside class="sidebar inspector">
+        <div class="panel-title"><div><p class="kicker">INSPECTEUR</p><h2>Propriétés</h2></div></div>
+        <div id="empty-inspector" class="empty-inspector"><div>⌁</div><strong>Aucune sélection</strong><span>Sélectionnez une tuile ou un marqueur sur le plateau.</span></div>
+        <div id="tile-inspector" hidden>
+          <div class="selection-card"><div id="selected-tile-thumb" class="mini-tile"></div><div><strong id="selected-tile-name"></strong><span id="selected-tile-product"></span></div></div>
+          <label>Rotation<select id="tile-rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
+          <div class="button-grid"><button id="rotate-left" class="ghost">↶ −90°</button><button id="rotate-right" class="ghost">↷ +90°</button></div>
+          <button id="replace-tile" class="wide-button ghost">Proposer un remplacement</button>
+          <button id="delete-selected" class="wide-button danger">Supprimer la tuile</button>
+        </div>
+        <div id="marker-inspector" hidden>
+          <div class="selection-card marker-selection"><span id="selected-marker-icon"></span><div><strong id="selected-marker-name"></strong><span>Marqueur de mission</span></div></div>
+          <label>Libellé<input id="marker-label" maxlength="12" /></label>
+          <label>Position X (%)<input id="marker-x" type="number" min="0" max="100" step="1" /></label>
+          <label>Position Y (%)<input id="marker-y" type="number" min="0" max="100" step="1" /></label>
+          <label id="anchor-field">Point d’accroche<select id="marker-anchor"></select></label>
+          <button id="delete-marker" class="wide-button danger">Supprimer le marqueur</button>
+        </div>
+
+        <section class="legend-section">
+          <div class="panel-title compact"><div><p class="kicker">APERÇU</p><h2>Légende automatique</h2></div></div>
+          <div id="legend" class="legend"></div>
+          <label class="check-row"><input id="show-tile-names" type="checkbox" checked /> Références des tuiles</label>
+          <label class="check-row"><input id="show-legend" type="checkbox" checked /> Légende dans l’export</label>
+        </section>
       </aside>
     </main>
 
-    <footer>Les visuels de tuiles peuvent être remplacés par vos propres ressources depuis le fichier JSON.</footer>
+    <div id="toast" class="toast" hidden></div>
     <script src="app.js"></script>
   </body>
 </html>

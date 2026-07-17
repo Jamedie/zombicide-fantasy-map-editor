@@ -1,0 +1,16 @@
+{
+  "format": "zombicide-map",
+  "version": 1,
+  "name": "Le Monastère oublié",
+  "grid": { "columns": 2, "rows": 1 },
+  "tiles": [
+    { "instanceId": "tile-a", "catalogId": "1r", "code": "1R", "face": "R", "column": 0, "row": 0, "rotation": 0, "customDoorAnchors": [] },
+    { "instanceId": "tile-b", "catalogId": "8v", "code": "8V", "face": "V", "column": 1, "row": 0, "rotation": 90, "customDoorAnchors": [] }
+  ],
+  "markers": [
+    { "id": "start-1", "type": "start", "tile": "tile-a", "x": 0.25, "y": 0.75, "label": "S" },
+    { "id": "objective-1", "type": "objective", "tile": "tile-b", "x": 0.5, "y": 0.5, "label": "1", "anchor": "8v-objective-01" },
+    { "id": "door-1", "type": "door", "tile": "tile-b", "x": 0.75, "y": 0.02, "label": "D", "anchor": "8v-door-01" }
+  ],
+  "render": { "showTileNames": true, "showLegend": true, "background": "#24282d" }
+}

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Catalogue — Forge de Quêtes</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="catalog.css" />
+    <link rel="stylesheet" href="catalog-slots.css" />
+  </head>
+  <body class="catalog-body">
+    <header class="topbar catalog-topbar">
+      <div class="brand">
+        <a class="back-button" href="index.html" aria-label="Retour à la Forge">←</a>
+        <span class="brand-mark">Z</span>
+        <div><p class="eyebrow">DONNÉES DE RÉFÉRENCE</p><h1>Éditeur de catalogue</h1></div>
+        <span class="mvp-badge">SLOTS</span>
+      </div>
+      <div class="document-actions">
+        <label class="button ghost" for="catalog-import">Importer JSON</label>
+        <input id="catalog-import" type="file" accept="application/json,.json" hidden />
+        <button id="catalog-export" class="primary">Exporter le catalogue</button>
+      </div>
+    </header>
+
+    <main class="catalog-shell">
+      <aside class="catalog-browser">
+        <div class="catalog-panel-head"><div><p class="kicker">84 FACES</p><h2>Bibliothèque</h2></div><span id="configured-count" class="count"></span></div>
+        <div class="search-wrap"><span>⌕</span><input id="catalog-search" type="search" placeholder="Numéro ou boîte…" /></div>
+        <select id="catalog-product-filter" class="catalog-select"><option value="">Toutes les boîtes</option></select>
+        <div id="catalog-tile-list" class="catalog-tile-list"></div>
+      </aside>
+
+      <section class="catalog-workspace">
+        <div class="catalog-workspace-toolbar">
+          <div><p id="catalog-current-product" class="kicker"></p><h2 id="catalog-current-title">Tuile</h2></div>
+          <div class="slot-tool-settings">
+            <label>Type de slot
+              <select id="new-slot-type">
+                <option value="door">Porte</option><option value="objective">Objectif</option><option value="start">Départ</option>
+                <option value="invasion">Invasion</option><option value="exit">Sortie</option><option value="statue">Statue</option>
+                <option value="chi">Chi</option><option value="vault">Coffre</option><option value="spawn">Nécromancien</option>
+                <option value="guard">Garde</option><option value="noise">Bruit</option>
+              </select>
+            </label>
+            <label>Orientation du prochain slot
+              <select id="new-slot-orientation"><option value="horizontal">Horizontale</option><option value="vertical">Verticale</option></select>
+            </label>
+            <button id="add-slot-tool" class="add-slot-tool" type="button" aria-pressed="false" title="Ajouter un slot sur la tuile">
+              <span aria-hidden="true">+</span><strong>Ajouter</strong>
+            </button>
+          </div>
+        </div>
+        <div class="catalog-canvas-area">
+          <div id="catalog-stage" class="catalog-stage" aria-label="Éditeur visuel des slots de porte"></div>
+        </div>
+        <div class="catalog-statusbar"><span id="catalog-tool-status">Mode déplacement • Glissez un slot pour le déplacer</span><span>Les coordonnées libres ne sont jamais exposées aux agents : ils utilisent uniquement l’identifiant du slot.</span></div>
+      </section>
+
+      <aside class="catalog-inspector">
+        <div class="catalog-panel-head"><div><p class="kicker">CONTRAT IA</p><h2>Slots autorisés</h2></div><span id="current-slot-count" class="count">0</span></div>
+        <p class="catalog-note">Une porte générée par un agent doit référencer l’un des identifiants listés ici. Tout autre ancrage est rejeté par la validation stricte.</p>
+        <div id="catalog-slot-list" class="catalog-slot-list"></div>
+
+        <div id="empty-slot-inspector" class="empty-inspector compact-empty"><div>⌖</div><strong>Aucun slot sélectionné</strong><span>Cliquez sur un slot pour modifier ses propriétés.</span></div>
+        <form id="slot-inspector-form" hidden>
+          <label>Identifiant stable<input id="slot-id" disabled /></label>
+          <label>Type<select id="slot-type"><option value="door">Porte</option><option value="objective">Objectif</option><option value="start">Départ</option><option value="invasion">Invasion</option><option value="exit">Sortie</option><option value="statue">Statue</option><option value="chi">Chi</option><option value="vault">Coffre</option><option value="spawn">Nécromancien</option><option value="guard">Garde</option><option value="noise">Bruit</option></select></label>
+          <label id="slot-orientation-field">Orientation<select id="slot-orientation"><option value="horizontal">Horizontale</option><option value="vertical">Verticale</option></select></label>
+          <div class="coordinate-grid"><label>X (%)<input id="slot-x" type="number" min="0" max="100" step="0.1" /></label><label>Y (%)<input id="slot-y" type="number" min="0" max="100" step="0.1" /></label></div>
+          <button id="delete-catalog-slot" class="wide-button danger" type="button">Supprimer ce slot</button>
+        </form>
+
+        <div class="catalog-inspector-actions">
+          <button id="clear-tile-slots" class="wide-button ghost">Effacer les slots de cette face</button>
+          <a href="https://zombicide.fandom.com/wiki/Fantasy_Tiles" class="source-link">Source des visuels ↗</a>
+        </div>
+      </aside>
+    </main>
+    <div id="catalog-toast" class="toast" hidden></div>
+    <script src="catalog.js"></script>
+  </body>
+</html>
