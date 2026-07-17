@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atelier de cartes Zombicide</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">ÉDITEUR DE CAMPAGNE</p>
+        <h1>Atelier de cartes Zombicide</h1>
+      </div>
+      <div class="document-actions">
+        <button id="new-map" class="secondary">Nouvelle carte</button>
+        <label class="button secondary" for="import-file">Importer JSON</label>
+        <input id="import-file" type="file" accept="application/json" hidden />
+        <button id="export-json" class="secondary">Exporter JSON</button>
+        <button id="export-image" class="primary">Exporter JPEG</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel library-panel">
+        <section>
+          <h2>Tuiles</h2>
+          <p class="hint">Glissez une tuile sur le plateau, ou cliquez pour l'ajouter.</p>
+          <div id="tile-library" class="tile-library"></div>
+        </section>
+        <section>
+          <h2>Marqueurs</h2>
+          <p class="hint">Ajoutez-les puis déplacez-les directement sur une tuile.</p>
+          <div id="marker-library" class="marker-library"></div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <div class="map-toolbar">
+          <label>Nom de la mission <input id="map-title" value="Nouvelle mission" maxlength="70" /></label>
+          <span id="selection-label" class="selection-label">Aucune sélection</span>
+          <button id="delete-selected" class="danger" disabled>Supprimer</button>
+        </div>
+        <div id="board" class="board" aria-label="Plateau de mission"></div>
+        <p class="board-help">Astuce : cliquez sur une tuile ou un marqueur pour le sélectionner, puis utilisez les flèches du clavier pour un ajustement précis.</p>
+      </section>
+
+      <aside class="panel inspector">
+        <h2>Propriétés</h2>
+        <div id="empty-inspector" class="empty-state">Sélectionnez un élément sur le plateau pour le configurer.</div>
+        <form id="properties-form" hidden>
+          <label>Type <input id="property-type" disabled /></label>
+          <label id="label-field">Libellé <input id="property-label" maxlength="12" /></label>
+          <label id="tile-code-field" hidden>Référence <input id="property-code" maxlength="8" /></label>
+          <label>Position X <input id="property-x" type="number" step="1" /></label>
+          <label>Position Y <input id="property-y" type="number" step="1" /></label>
+          <label id="rotation-field" hidden>Rotation
+            <select id="property-rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>
+          </label>
+          <button class="secondary" id="duplicate-selected" type="button">Dupliquer</button>
+        </form>
+      </aside>
+    </main>
+
+    <footer>Les visuels de tuiles peuvent être remplacés par vos propres ressources depuis le fichier JSON.</footer>
+    <script src="app.js"></script>
+  </body>
+</html>
