@@ -152,6 +152,13 @@ function exportCatalog() {
 }
 async function saveProjectCatalog() {
   const button = document.querySelector('#catalog-save-project');
+
+  // si l'adresse n'est pas localhost:5173 ou [IP_ADDRESS]:5173 on cache le boutton
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '[IP_ADDRESS]') {
+    button.style.display = 'none';
+    return;
+  }
+
   const previousLabel = button.textContent;
   button.disabled = true;
   button.textContent = 'Enregistrement…';

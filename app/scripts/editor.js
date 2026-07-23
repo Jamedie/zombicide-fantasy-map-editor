@@ -568,7 +568,8 @@ async function embedTileImages(svg) {
 function safeName(name) { return (name || 'mission').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase(); }
 function missionSvg() {
   const width = mission.grid.columns * TILE_SIZE; const boardHeight = mission.grid.rows * TILE_SIZE; const legendWidth = mission.render.showLegend && mission.markers.length ? 190 : 0; const height = boardHeight + 54;
-  const tiles = mission.tiles.map(tile => { const data = catalogTile(tile.catalogId) || { code: tile.code || '?', name: 'Tuile inconnue' }; const x = tile.column * TILE_SIZE; const y = tile.row * TILE_SIZE; const art = data.image ? `<image href="${xml(data.image)}" width="${TILE_SIZE}" height="${TILE_SIZE}" preserveAspectRatio="none"/>` : `<rect width="${TILE_SIZE}" height="${TILE_SIZE}" fill="#756e59"/><path d="M0 0H240V48H0zM0 120H240V174H0z" fill="#b8aa84" opacity=".72"/><path d="M0 48H240V120H0zM0 174H240V240H0z" fill="#303733" opacity=".9"/><path d="M0 0L240 240M240 0L0 240" stroke="#000" opacity=".12" stroke-width="3"/>`;
+  const tiles = mission.tiles.map(tile => {
+    const data = catalogTile(tile.catalogId) || { code: tile.code || '?', name: 'Tuile inconnue' }; const x = tile.column * TILE_SIZE; const y = tile.row * TILE_SIZE; const art = data.image ? `<image href="${xml(data.image)}" width="${TILE_SIZE}" height="${TILE_SIZE}" preserveAspectRatio="none"/>` : `<rect width="${TILE_SIZE}" height="${TILE_SIZE}" fill="#756e59"/><path d="M0 0H240V48H0zM0 120H240V174H0z" fill="#b8aa84" opacity=".72"/><path d="M0 48H240V120H0zM0 174H240V240H0z" fill="#303733" opacity=".9"/><path d="M0 0L240 240M240 0L0 240" stroke="#000" opacity=".12" stroke-width="3"/>`;
     return `<g transform="translate(${x} ${y})"><g transform="rotate(${tile.rotation} 120 120)">${art}<rect width="240" height="240" fill="none" stroke="#111" stroke-width="5"/></g>${mission.render.showTileNames ? `<rect x="8" y="8" width="42" height="25" rx="3" fill="#111" stroke="#fff"/><text x="29" y="26" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">${xml(data.code)}</text>` : ''}</g>`;
   }).join('');
   const colors = { start: '#2d6eb6', objective: '#bd343b', invasion: '#a62d32', exit: '#318053', door: '#666c72', spawn: '#7f3f98', npc: '#7f3f98', vault: '#a77b27', noise: '#217d86', gate: '#a77b27', rubble: '#b87416', guard: '#24798a', statue: '#727981', chi: '#55a6b4' };
@@ -676,7 +677,7 @@ document.querySelector('#export-image').addEventListener('click', async () => { 
 
 async function initialize() {
   try {
-    const response = await fetch('config/default-catalog.json', { cache: 'no-store' });
+    const response = await fetch('app/assets/config/default-catalog.json', { cache: 'no-store' });
     if (!response.ok) throw new Error();
     const data = await response.json();
     if (data.format !== 'zombicide-catalog' || !Array.isArray(data.tiles)) throw new Error();
