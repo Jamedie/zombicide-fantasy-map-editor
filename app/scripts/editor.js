@@ -677,7 +677,7 @@ document.querySelector('#export-image').addEventListener('click', async () => { 
 
 async function initialize() {
   try {
-    const response = await fetch('app/assets/config/default-catalog.json', { cache: 'no-store' });
+    const response = await fetch('assets/config/default-catalog.json', { cache: 'no-store' });
     if (!response.ok) throw new Error();
     const data = await response.json();
     if (data.format !== 'zombicide-catalog' || !Array.isArray(data.tiles)) throw new Error();

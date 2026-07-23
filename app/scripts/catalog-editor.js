@@ -238,7 +238,7 @@ async function linkPersonalFile() {
 }
 async function initialize() {
   try {
-    const response = await fetch('app/assets/config/default-catalog.json', { cache: 'no-store' });
+    const response = await fetch('assets/config/default-catalog.json', { cache: 'no-store' });
     if (!response.ok) throw new Error();
     applyCatalogData(await response.json(), true);
   } catch {
