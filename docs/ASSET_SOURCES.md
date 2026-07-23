@@ -1,6 +1,6 @@
 # Sources des visuels
 
-Les 84 faces de tuiles présentes dans `assets/tiles/` proviennent de la page communautaire suivante :
+Les 84 faces de tuiles présentes dans `app/assets/tiles/` proviennent de la page communautaire suivante :
 
 - [Fantasy Tiles — Zombicide Wiki / Fandom](https://zombicide.fandom.com/wiki/Fantasy_Tiles)
 - Consultation et récupération : 17 juillet 2026

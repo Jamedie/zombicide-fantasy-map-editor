@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Catalogue — Forge de Quêtes</title>
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="catalog.css" />
-    <link rel="stylesheet" href="catalog-slots.css" />
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/catalog.css" />
+    <link rel="stylesheet" href="styles/catalog-slots.css" />
   </head>
   <body class="catalog-body">
     <header class="topbar catalog-topbar">
@@ -17,9 +17,12 @@
         <span class="mvp-badge">SLOTS</span>
       </div>
       <div class="document-actions">
+        <span id="catalog-file-status" class="catalog-file-status">Sauvegarde navigateur</span>
         <label class="button ghost" for="catalog-import">Importer JSON</label>
         <input id="catalog-import" type="file" accept="application/json,.json" hidden />
-        <button id="catalog-export" class="primary">Exporter le catalogue</button>
+        <button id="catalog-save-project" class="primary">Enregistrer dans le projet</button>
+        <button id="catalog-file-link" class="ghost">Fichier externe</button>
+        <button id="catalog-export" class="ghost">Télécharger une copie</button>
       </div>
     </header>
 
@@ -40,13 +43,16 @@
                 <option value="door">Porte</option><option value="objective">Objectif</option><option value="start">Départ</option>
                 <option value="invasion">Invasion</option><option value="exit">Sortie</option><option value="statue">Statue</option>
                 <option value="chi">Chi</option><option value="vault">Coffre</option><option value="spawn">Nécromancien</option>
-                <option value="guard">Garde</option><option value="noise">Bruit</option>
+                <option value="guard">Garde</option><option value="noise">Bruit</option><option value="gate">Grille</option><option value="rubble">Gravats</option>
               </select>
             </label>
             <label>Orientation du prochain slot
               <select id="new-slot-orientation"><option value="horizontal">Horizontale</option><option value="vertical">Verticale</option></select>
             </label>
-            <button id="add-slot-tool" class="add-slot-tool" type="button" aria-pressed="false" title="Ajouter un slot sur la tuile">
+            <label class="snap-grid-setting" title="Aligner automatiquement les portes sur l’arête 3 × 3 la plus proche">
+              <input id="snap-door-grid" type="checkbox" /> Aimantation 3×3
+            </label>
+            <button id="add-slot-tool" class="add-slot-tool" type="button" aria-pressed="false" title="Ajouter un slot sur la tuile — raccourci Porte : P">
               <span aria-hidden="true">+</span><strong>Ajouter</strong>
             </button>
           </div>
@@ -60,12 +66,23 @@
       <aside class="catalog-inspector">
         <div class="catalog-panel-head"><div><p class="kicker">CONTRAT IA</p><h2>Slots autorisés</h2></div><span id="current-slot-count" class="count">0</span></div>
         <p class="catalog-note">Une porte générée par un agent doit référencer l’un des identifiants listés ici. Tout autre ancrage est rejeté par la validation stricte.</p>
+        <details class="catalog-shortcuts">
+          <summary>Raccourcis clavier</summary>
+          <div>
+            <span><kbd>P</kbd>Porte</span><span><kbd>O</kbd>Objectif</span>
+            <span><kbd>D</kbd>Départ</span><span><kbd>I</kbd>Invasion</span>
+            <span><kbd>S</kbd>Sortie</span><span><kbd>T</kbd>Statue</span>
+            <span><kbd>X</kbd>Chi</span><span><kbd>C</kbd>Coffre</span>
+            <span><kbd>N</kbd>Nécromancien</span><span><kbd>G</kbd>Garde</span>
+            <span><kbd>B</kbd>Bruit</span><span><kbd>Échap</kbd>Annuler</span>
+          </div>
+        </details>
         <div id="catalog-slot-list" class="catalog-slot-list"></div>
 
         <div id="empty-slot-inspector" class="empty-inspector compact-empty"><div>⌖</div><strong>Aucun slot sélectionné</strong><span>Cliquez sur un slot pour modifier ses propriétés.</span></div>
         <form id="slot-inspector-form" hidden>
           <label>Identifiant stable<input id="slot-id" disabled /></label>
-          <label>Type<select id="slot-type"><option value="door">Porte</option><option value="objective">Objectif</option><option value="start">Départ</option><option value="invasion">Invasion</option><option value="exit">Sortie</option><option value="statue">Statue</option><option value="chi">Chi</option><option value="vault">Coffre</option><option value="spawn">Nécromancien</option><option value="guard">Garde</option><option value="noise">Bruit</option></select></label>
+          <label>Type<select id="slot-type"><option value="door">Porte</option><option value="objective">Objectif</option><option value="start">Départ</option><option value="invasion">Invasion</option><option value="exit">Sortie</option><option value="statue">Statue</option><option value="chi">Chi</option><option value="vault">Coffre</option><option value="spawn">Nécromancien</option><option value="guard">Garde</option><option value="noise">Bruit</option><option value="gate">Grille</option><option value="rubble">Gravats</option></select></label>
           <label id="slot-orientation-field">Orientation<select id="slot-orientation"><option value="horizontal">Horizontale</option><option value="vertical">Verticale</option></select></label>
           <div class="coordinate-grid"><label>X (%)<input id="slot-x" type="number" min="0" max="100" step="0.1" /></label><label>Y (%)<input id="slot-y" type="number" min="0" max="100" step="0.1" /></label></div>
           <button id="delete-catalog-slot" class="wide-button danger" type="button">Supprimer ce slot</button>
@@ -78,6 +95,6 @@
       </aside>
     </main>
     <div id="catalog-toast" class="toast" hidden></div>
-    <script src="catalog.js"></script>
+    <script src="scripts/catalog-editor.js"></script>
   </body>
 </html>

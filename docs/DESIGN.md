@@ -1,6 +1,6 @@
 # Design gelé — MVP 0.1
 
-Le design visible dans `index.html` et `styles.css` est la référence visuelle du MVP.
+Le design visible dans `app/index.html` et `app/styles/main.css` est la référence visuelle du MVP.
 
 ## Contrat visuel
 
@@ -14,4 +14,3 @@ Le design visible dans `index.html` et `styles.css` est la référence visuelle 
 - Aucun framework graphique ou bibliothèque d’icônes requis.
 
 Les futures fonctionnalités doivent réutiliser les composants et variables CSS existants. Toute modification substantielle de la palette, de la structure, des espacements ou de l’identité doit être considérée comme une nouvelle version de design.
-

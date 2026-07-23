@@ -2,7 +2,7 @@
   "format": "zombicide-catalog",
   "version": 2,
   "source": "https://zombicide.fandom.com/wiki/Fantasy_Tiles",
-  "slotPolicy": { "doorPlacement": "anchor-required", "otherPlacement": "catalog-preferred", "freeDoorCoordinates": false },
+  "slotPolicy": { "doorPlacement": "catalog-preferred", "otherPlacement": "catalog-preferred", "freeDoorCoordinates": true },
   "tiles": [
     {
       "id": "1r",

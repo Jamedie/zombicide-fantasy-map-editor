@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Forge de Quêtes — Zombicide Fantasy</title>
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="slot-selection.css" />
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/slot-selection.css" />
   </head>
   <body>
     <header class="topbar">
@@ -45,7 +45,7 @@
 
         <section class="tab-panel" data-panel="markers">
           <div class="panel-title"><div><p class="kicker">PALETTE</p><h2>Marqueurs de mission</h2></div></div>
-          <p class="panel-help">Cliquez sur un marqueur pour le poser au centre de la première tuile. Déplacez-le ensuite librement.</p>
+          <p class="panel-help">Cliquez sur un marqueur pour le poser automatiquement selon son type. Vous pourrez ensuite choisir un point d’accroche ou un placement libre.</p>
           <div id="marker-library" class="marker-library"></div>
           <div class="tip"><strong>Portes aimantées</strong><span>Les portes s’accrochent aux points définis dans l’éditeur de tuiles de l’onglet Collection.</span></div>
         </section>
@@ -112,6 +112,6 @@
     </main>
 
     <div id="toast" class="toast" hidden></div>
-    <script src="app.js"></script>
+    <script src="scripts/editor.js"></script>
   </body>
 </html>
