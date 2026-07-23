@@ -238,7 +238,7 @@ async function linkPersonalFile() {
 }
 async function initialize() {
   try {
-    const response = await fetch('config/default-catalog.json', { cache: 'no-store' });
+    const response = await fetch('app/assets/config/default-catalog.json', { cache: 'no-store' });
     if (!response.ok) throw new Error();
     applyCatalogData(await response.json(), true);
   } catch {
@@ -297,8 +297,14 @@ document.querySelector('#slot-orientation').addEventListener('change', event => 
 document.querySelector('#slot-x').addEventListener('change', event => updateSelectedSlot({ x: clamp(Number(event.target.value) / 100, 0, 1) }));
 document.querySelector('#slot-y').addEventListener('change', event => updateSelectedSlot({ y: clamp(Number(event.target.value) / 100, 0, 1) }));
 document.querySelector('#delete-catalog-slot').addEventListener('click', () => { if (!selectedSlotId) return; setSlots(selectedTileId, slots(selectedTileId).filter(slot => slot.id !== selectedSlotId)); selectedSlotId = null; render(); toast('Slot supprimé.'); });
-document.querySelector('#clear-tile-slots').addEventListener('click', () => { const tile = tileById(selectedTileId); if (!tile || !slots(tile.id).length) return; if (!confirm(`Effacer tous les slots de ${tile.code} ?`)) return; setSlots(tile.id, []); selectedSlotId = null; render(); toast('Slots effacés.'); });
-document.querySelector('#catalog-save-project').addEventListener('click', saveProjectCatalog);
+document.querySelector('#clear-tile-slots').addEventListener('click', () => { const tile = tileById(selectedSlotId); if (!tile || !slots(tile.id).length) return; if (!confirm(`Effacer tous les slots de ${tile.code} ?`)) return; setSlots(tile.id, []); selectedSlotId = null; render(); toast('Slots effacés.'); });
+
+if (window.location.hostname === 'localhost' || window.location.hostname === '[IP_ADDRESS]') {
+  document.querySelector('#catalog-save-project').addEventListener('click', saveProjectCatalog);
+} else {
+  document.querySelector('#catalog-save-project').style.display = 'none';
+}
+
 document.querySelector('#catalog-file-link').addEventListener('click', linkPersonalFile);
 document.querySelector('#catalog-export').addEventListener('click', exportCatalog);
 document.querySelector('#catalog-import').addEventListener('change', async event => {
