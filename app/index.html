@@ -94,7 +94,7 @@
           <button id="delete-selected" class="wide-button danger">Supprimer la tuile</button>
         </div>
         <div id="marker-inspector" hidden>
-          <div class="selection-card marker-selection"><span id="selected-marker-icon"></span><div><strong id="selected-marker-name"></strong><span>Marqueur de mission</span></div></div>
+          <div class="selection-card marker-selection"><span id="selected-marker-icon"></span><div><strong id="selected-marker-name"></strong><span id="selected-marker-meta">Marqueur de mission</span></div></div>
           <label>Libellé<input id="marker-label" maxlength="12" /></label>
           <label>Position X (%)<input id="marker-x" type="number" min="0" max="100" step="1" /></label>
           <label>Position Y (%)<input id="marker-y" type="number" min="0" max="100" step="1" /></label>
@@ -112,6 +112,7 @@
     </main>
 
     <div id="toast" class="toast" hidden></div>
+    <script src="scripts/token.js"></script>
     <script src="scripts/editor.js"></script>
   </body>
 </html>

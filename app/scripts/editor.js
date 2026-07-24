@@ -25,24 +25,17 @@ const BASE_CATALOG = TILE_PRODUCT_RANGES.flatMap(range => Array.from({ length: r
   doorAnchors: []
 }));
 
-const MARKERS = [
-  { type: 'start', name: 'Départ', label: 'S' }, { type: 'objective', name: 'Objectif', label: '1' },
-  { type: 'invasion', name: 'Invasion', label: '1' }, { type: 'exit', name: 'Sortie', label: 'E' },
-  { type: 'door', name: 'Porte', label: 'D' }, { type: 'spawn', name: 'Nécromancien', label: 'N' },
-  { type: 'npc', name: 'NPC cible', label: 'N' },
-  { type: 'vault', name: 'Coffre / objectif', label: 'C' }, { type: 'noise', name: 'Bruit', label: '!' },
-  { type: 'gate', name: 'Grille', label: 'G' }, { type: 'rubble', name: 'Gravats', label: 'X' },
-  { type: 'guard', name: 'Garde', label: 'G' }, { type: 'statue', name: 'Statue', label: 'ST' },
-  { type: 'chi', name: 'Chi', label: 'χ' }
-];
-
 const TILE_SIZE = 240;
 const DOOR_EDGE_MARGIN = .08;
 const DOOR_CONNECTION_TOLERANCE = .06;
-const CATALOG_PREFERRED_MARKERS = new Set(['gate', 'rubble']);
-const EDGE_DEFAULT_MARKERS = new Set(['start', 'invasion', 'exit']);
-const EDGE_ANCHOR_MARKERS = new Set(['start', 'invasion', 'exit']);
-const CELL_CENTER_MARKERS = new Set(['objective', 'spawn', 'npc', 'vault', 'noise', 'guard', 'statue', 'chi']);
+const {
+  MARKERS,
+  MARKER_CATEGORIES,
+  CATALOG_PREFERRED_MARKERS,
+  EDGE_DEFAULT_MARKERS,
+  EDGE_ANCHOR_MARKERS,
+  CELL_CENTER_MARKERS
+} = window.ZOMBICIDE_TOKENS;
 const storage = {
   get(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } },
   set(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
@@ -68,7 +61,7 @@ function newMission() {
 }
 function profile() { return profiles[activeProfile]; }
 function uid(prefix) { return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`; }
-function productName(id) { return PRODUCTS.find(product => product.id === id)?.name || 'Boîte inconnue'; }
+function productName(id) { return id ? (PRODUCTS.find(product => product.id === id)?.name || 'Boîte inconnue') : 'Base'; }
 function catalogTile(id) { return catalog.find(tile => tile.id === id); }
 function placedTile(id) { return mission.tiles.find(tile => tile.instanceId === id); }
 function physicalTileKey(tileOrId) {
@@ -88,6 +81,14 @@ function duplicatePhysicalTiles(tiles) {
   return duplicates;
 }
 function markerType(type) { return MARKERS.find(marker => marker.type === type); }
+function markerCategoryName(id) { return MARKER_CATEGORIES.find(category => category.id === id)?.label || id; }
+function markerOriginName(marker) { return marker?.product ? productName(marker.product) : marker?.category === 'custom' ? 'Custom' : 'Base'; }
+function markerAvailable(markerOrType) {
+  const marker = typeof markerOrType === 'string' ? markerType(markerOrType) : markerOrType;
+  if (!marker) return false;
+  if (!marker.product) return true;
+  return profile().ownedProducts.includes(marker.product);
+}
 function esc(text) { const node = document.createElement('div'); node.textContent = String(text ?? ''); return node.innerHTML; }
 function xml(text) { return String(text ?? '').replace(/[<>&"']/g, char => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[char])); }
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
@@ -306,9 +307,12 @@ function renderTabs() {
 function renderCollection() {
   document.querySelector('#profile-select').innerHTML = profiles.map((entry, index) => `<option value="${index}" ${index === activeProfile ? 'selected' : ''}>${esc(entry.name)}</option>`).join('');
   document.querySelector('#product-list').innerHTML = PRODUCTS.map(product => {
-    const count = catalog.filter(tile => tile.product === product.id).length;
-    if (!count && product.id === 'custom') return '';
-    return `<label class="product-choice"><input type="checkbox" data-product="${product.id}" ${profile().ownedProducts.includes(product.id) ? 'checked' : ''}/>${esc(product.name)}<span>${count} faces</span></label>`;
+    const tileCount = catalog.filter(tile => tile.product === product.id).length;
+    const markerCount = MARKERS.filter(marker => marker.product === product.id).length;
+    if (!tileCount && !markerCount && product.id === 'custom') return '';
+    const details = [`${tileCount} faces`];
+    if (markerCount) details.push(`${markerCount} tokens`);
+    return `<label class="product-choice"><input type="checkbox" data-product="${product.id}" ${profile().ownedProducts.includes(product.id) ? 'checked' : ''}/>${esc(product.name)}<span>${details.join(' · ')}</span></label>`;
   }).join('');
 }
 function renderLibrary() {
@@ -329,7 +333,35 @@ function renderLibrary() {
   }).join('') || '<p class="legend-empty">Aucune tuile ne correspond à ces critères.</p>';
 }
 function renderMarkerLibrary() {
-  document.querySelector('#marker-library').innerHTML = MARKERS.map(marker => `<button class="marker-choice" data-marker-type="${marker.type}">${markerHtml(marker.type, marker.label)}<span>${esc(marker.name)}</span></button>`).join('');
+  const sorted = [...MARKERS].sort((first, second) =>
+    first.name.localeCompare(second.name, 'fr')
+  );
+  const standaloneSections = ['base', 'custom'].map(categoryId => {
+    const markers = sorted.filter(marker => !marker.product && marker.category === categoryId);
+    if (!markers.length) return '';
+    const title = categoryId === 'base' ? 'Base' : 'Custom';
+    return `<section class="marker-product-group"><div class="marker-product-title"><strong>${esc(title)}</strong><span>${markers.length} token${markers.length > 1 ? 's' : ''}</span></div><div class="marker-group"><div class="marker-group-title"><strong>${esc(markerCategoryName(categoryId))}</strong><span>${markers.length}</span></div><div class="marker-group-grid">${
+      markers.map(marker => `<button class="marker-choice" data-marker-type="${marker.type}" title="Disponible dans toutes les collections">${markerHtml(marker.type, marker.label)}<span>${esc(marker.name)}</span><small>${esc(markerCategoryName(marker.category))}</small></button>`).join('')
+    }</div></div></section>`;
+  }).join('');
+  const productSections = PRODUCTS.map(product => {
+    const productMarkers = sorted.filter(marker => marker.product === product.id);
+    if (!productMarkers.length) return '';
+    const available = profile().ownedProducts.includes(product.id);
+    return `<section class="marker-product-group ${available ? '' : 'unavailable'}"><div class="marker-product-title"><strong>${esc(product.name)}</strong><span>${productMarkers.length} token${productMarkers.length > 1 ? 's' : ''}</span></div>${
+      MARKER_CATEGORIES.map(category => {
+        const markers = productMarkers.filter(marker => marker.category === category.id);
+        if (!markers.length) return '';
+        return `<div class="marker-group"><div class="marker-group-title"><strong>${esc(category.label)}</strong><span>${markers.length}</span></div><div class="marker-group-grid">${
+          markers.map(marker => {
+            const markerIsAvailable = markerAvailable(marker);
+            return `<button class="marker-choice ${markerIsAvailable ? '' : 'unavailable'}" data-marker-type="${marker.type}" ${markerIsAvailable ? '' : 'disabled'} title="${markerIsAvailable ? esc(product.name) : `${esc(product.name)} non sélectionnée`}">${markerHtml(marker.type, marker.label)}<span>${esc(marker.name)}</span><small>${esc(category.label)}</small></button>`;
+          }).join('')
+        }</div></div>`;
+      }).join('')
+    }</section>`;
+  }).join('');
+  document.querySelector('#marker-library').innerHTML = standaloneSections + productSections;
 }
 function renderBoard() {
   const board = document.querySelector('#board');
@@ -359,7 +391,7 @@ function renderBoard() {
     const tile = placedTile(marker.tile); if (!tile) return;
     const point = displayPoints.get(marker.id) || markerBoardPoint(marker);
     const node = document.createElement('div');
-    node.className = `marker-node marker-${marker.type} type-${marker.type} ${selected?.kind === 'marker' && selected.id === marker.id ? 'selected' : ''}`;
+    node.className = `marker-node marker-${marker.type} type-${marker.type} ${markerAvailable(marker.type) ? '' : 'unavailable'} ${selected?.kind === 'marker' && selected.id === marker.id ? 'selected' : ''}`;
     node.dataset.markerId = marker.id; node.style.left = `${point.x * TILE_SIZE}px`; node.style.top = `${point.y * TILE_SIZE}px`;
     node.innerHTML = `<span>${esc(marker.label)}</span>`; board.append(node);
   });
@@ -379,6 +411,7 @@ function renderInspector() {
     const type = markerType(current.type);
     document.querySelector('#selected-marker-icon').innerHTML = markerHtml(current.type, current.label);
     document.querySelector('#selected-marker-name').textContent = type?.name || current.type;
+    document.querySelector('#selected-marker-meta').textContent = type ? `${markerOriginName(type)} — ${markerCategoryName(type.category)}` : 'Marqueur de mission';
     document.querySelector('#marker-label').value = current.label;
     document.querySelector('#marker-x').value = Math.round(current.x * 100);
     document.querySelector('#marker-y').value = Math.round(current.y * 100);
@@ -416,10 +449,12 @@ function renderLegend() {
 }
 function renderWarnings() {
   const issues = mission.tiles.filter(tile => !availability(tile.catalogId).available);
+  const markerIssues = mission.markers.filter(marker => !markerAvailable(marker.type));
   const duplicates = duplicatePhysicalTiles(mission.tiles);
   const duplicateDoors = duplicateDoorConnections();
   const messages = [];
   if (issues.length) messages.push(`<strong>${issues.length} tuile${issues.length > 1 ? 's' : ''} indisponible${issues.length > 1 ? 's' : ''}</strong> dans « ${esc(profile().name)} » : ${issues.map(tile => esc(catalogTile(tile.catalogId)?.code || tile.catalogId)).join(', ')}.`);
+  if (markerIssues.length) messages.push(`<strong>${markerIssues.length} marqueur${markerIssues.length > 1 ? 's' : ''} indisponible${markerIssues.length > 1 ? 's' : ''}</strong> dans « ${esc(profile().name)} » : ${markerIssues.map(marker => esc(markerType(marker.type)?.name || marker.type)).join(', ')}.`);
   if (duplicates.length) messages.push(`<strong>Doublon interdit</strong> : ${duplicates.map(([first, second]) => `${esc(catalogTile(first.catalogId)?.code || first.code)} / ${esc(catalogTile(second.catalogId)?.code || second.code)}`).join(', ')}. Les faces R et V comptent comme la même tuile.`);
   if (duplicateDoors.length) messages.push(`<strong>Connexion de porte en double</strong> : deux marqueurs utilisent la même jonction entre tuiles.`);
   const bar = document.querySelector('#warning-bar'); bar.hidden = messages.length === 0;
@@ -478,11 +513,14 @@ function centralMarkerPosition(tile) {
   return firstOpenMarkerPosition(tile, gridCellAnchors().map(({ x, y }) => ({ x, y })));
 }
 function addMarker(type) {
+  const meta = markerType(type);
+  if (!meta) return toast('Type de marqueur inconnu.', true);
+  if (!markerAvailable(meta)) return toast(`${meta.name} nécessite ${productName(meta.product)} dans la collection.`, true);
   let tile = selected?.kind === 'tile' ? item() : mission.tiles[0]; if (!tile) return toast('Placez d’abord une tuile sur la grille.', true);
   if (type === 'invasion' && tile.column > 0 && tile.column < mission.grid.columns - 1 && tile.row > 0 && tile.row < mission.grid.rows - 1) {
     tile = mission.tiles.find(entry => entry.column === 0 || entry.column === mission.grid.columns - 1 || entry.row === 0 || entry.row === mission.grid.rows - 1) || tile;
   }
-  const meta = markerType(type); const sameType = mission.markers.filter(marker => marker.type === type).length;
+  const sameType = mission.markers.filter(marker => marker.type === type).length;
   const defaultPosition = EDGE_DEFAULT_MARKERS.has(type) ? edgeMarkerPosition(tile, type) : centralMarkerPosition(tile);
   let marker = { id: uid(type), type, tile: tile.instanceId, ...defaultPosition, label: ['objective', 'invasion'].includes(type) ? String(sameType + 1) : meta.label };
   if (type === 'door') {
@@ -572,9 +610,9 @@ function missionSvg() {
     const data = catalogTile(tile.catalogId) || { code: tile.code || '?', name: 'Tuile inconnue' }; const x = tile.column * TILE_SIZE; const y = tile.row * TILE_SIZE; const art = data.image ? `<image href="${xml(data.image)}" width="${TILE_SIZE}" height="${TILE_SIZE}" preserveAspectRatio="none"/>` : `<rect width="${TILE_SIZE}" height="${TILE_SIZE}" fill="#756e59"/><path d="M0 0H240V48H0zM0 120H240V174H0z" fill="#b8aa84" opacity=".72"/><path d="M0 48H240V120H0zM0 174H240V240H0z" fill="#303733" opacity=".9"/><path d="M0 0L240 240M240 0L0 240" stroke="#000" opacity=".12" stroke-width="3"/>`;
     return `<g transform="translate(${x} ${y})"><g transform="rotate(${tile.rotation} 120 120)">${art}<rect width="240" height="240" fill="none" stroke="#111" stroke-width="5"/></g>${mission.render.showTileNames ? `<rect x="8" y="8" width="42" height="25" rx="3" fill="#111" stroke="#fff"/><text x="29" y="26" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">${xml(data.code)}</text>` : ''}</g>`;
   }).join('');
-  const colors = { start: '#2d6eb6', objective: '#bd343b', invasion: '#a62d32', exit: '#318053', door: '#666c72', spawn: '#7f3f98', npc: '#7f3f98', vault: '#a77b27', noise: '#217d86', gate: '#a77b27', rubble: '#b87416', guard: '#24798a', statue: '#727981', chi: '#55a6b4' };
+  const colors = { start: '#2d6eb6', objective: '#bd343b', invasion: '#a62d32', exit: '#318053', door: '#666c72', spawn: '#7f3f98', npc: '#7f3f98', vault: '#a77b27', crypt: '#4d4568', noise: '#217d86', gate: '#a77b27', rubble: '#b87416', guard: '#24798a', statue: '#727981', chi: '#55a6b4' };
   const displayPoints = markerDisplayPoints();
-  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerBoardPoint(marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate'].includes(marker.type); const size = marker.type === 'door' ? 27 : 35; const rotation = marker.type === 'door' ? ` transform="rotate(45 ${x} ${y})"` : ''; const textRotation = marker.type === 'door' ? ` transform="rotate(-45 ${x} ${y})"` : ''; return `<g${rotation}><rect x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" rx="${square ? 3 : size / 2}" fill="${colors[marker.type] || '#555'}" stroke="#fff" stroke-width="3"/><text x="${x}" y="${y + 5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold"${textRotation}>${xml(marker.label)}</text></g>`; }).join('');
+  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerBoardPoint(marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate', 'crypt'].includes(marker.type); const size = marker.type === 'door' ? 27 : 35; const rotation = marker.type === 'door' ? ` transform="rotate(45 ${x} ${y})"` : ''; const textRotation = marker.type === 'door' ? ` transform="rotate(-45 ${x} ${y})"` : ''; return `<g${rotation}><rect x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" rx="${square ? 3 : size / 2}" fill="${colors[marker.type] || '#555'}" stroke="#fff" stroke-width="3"/><text x="${x}" y="${y + 5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold"${textRotation}>${xml(marker.label)}</text></g>`; }).join('');
   const counts = mission.markers.reduce((out, marker) => { out[marker.type] = (out[marker.type] || 0) + 1; return out; }, {}); const legend = legendWidth ? `<g transform="translate(${width + 18} 26)"><text fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">LÉGENDE</text>${Object.entries(counts).map(([type, count], index) => { const symbol = mission.markers.find(marker => marker.type === type)?.label || markerType(type)?.label || '?'; const centerY = 30 + index * 28; return `<circle cx="10" cy="${centerY}" r="9" fill="${colors[type] || '#555'}" stroke="#fff"/><text x="10" y="${centerY + 3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">${xml(symbol)}</text><text x="28" y="${centerY + 4}" fill="#eee" font-size="11">${xml(markerType(type)?.name || type)} × ${count}</text>`; }).join('')}</g>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width + legendWidth}" height="${height}" viewBox="0 0 ${width + legendWidth} ${height}"><rect width="100%" height="100%" fill="#15181c"/><text x="14" y="35" fill="#f0c765" font-family="Georgia,serif" font-size="20" font-weight="bold">${xml(mission.name)}</text><g transform="translate(0 54)">${tiles}${markers}</g>${legend}</svg>`;
 }
@@ -588,7 +626,10 @@ document.querySelector('#tile-library').addEventListener('change', event => {
   profile().tileWhitelist = profile().tileWhitelist.filter(value => value !== id); profile().tileBlacklist = profile().tileBlacklist.filter(value => value !== id);
   if (event.target.value === 'whitelist') profile().tileWhitelist.push(id); if (event.target.value === 'blacklist') profile().tileBlacklist.push(id); render();
 });
-document.querySelector('#marker-library').addEventListener('click', event => { const button = event.target.closest('[data-marker-type]'); if (button) addMarker(button.dataset.markerType); });
+document.querySelector('#marker-library').addEventListener('click', event => {
+  const button = event.target.closest('[data-marker-type]');
+  if (button && !button.disabled) addMarker(button.dataset.markerType);
+});
 document.querySelector('#product-list').addEventListener('change', event => { const id = event.target.dataset.product; if (!id) return; profile().ownedProducts = [...document.querySelectorAll('[data-product]:checked')].map(input => input.dataset.product); render(); });
 document.querySelector('#profile-select').addEventListener('change', event => { activeProfile = Number(event.target.value); render(); });
 document.querySelector('#new-profile').addEventListener('click', () => { const name = prompt('Nom du nouveau profil :', `Collection ${profiles.length + 1}`)?.trim(); if (!name) return; profiles.push(newCollection(name)); activeProfile = profiles.length - 1; render(); });

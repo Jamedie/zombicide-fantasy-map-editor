@@ -24,11 +24,12 @@ examples/       Collection, catalogue et mission d’exemple
 tests/          Tests automatisés de la CLI
 ```
 
-Les slots peuvent être déplacés par glisser-déposer. Les types disponibles sont : porte, objectif, départ, invasion, sortie, statue, Chi, coffre, nécromancien, garde et bruit.
+Les slots peuvent être déplacés par glisser-déposer. Les types disponibles sont : porte, objectif, départ, invasion, sortie, statue, Chi, coffre, crypte, nécromancien, garde et bruit.
+Les marqueurs sont triés dans la palette en trois temps : tokens de base, tokens custom, puis tokens uniques groupés par boîte. Une boîte décochée dans la collection rend ses marqueurs uniques indisponibles, y compris pour la validation stricte de la CLI.
 
 Deux slots de porte placés face à face sur la jonction de deux tuiles représentent une seule connexion logique. L’éditeur centre la porte sur la séparation et interdit d’ajouter un second marqueur sur cette même connexion ; la CLI applique la même règle.
 
-Les marqueurs disposent également d’un placement initial adapté : les portes préfèrent leurs slots mais restent déplaçables librement, les grilles et gravats préfèrent leurs slots de catalogue ou les arêtes de la grille 3×3, les départs/sorties/invasions occupent le centre d’une case extérieure, et les objectifs, nécromanciens et autres marqueurs centraux occupent le centre exact d’une case de la grille 3×3.
+Les marqueurs disposent également d’un placement initial adapté : les portes préfèrent leurs slots mais restent déplaçables librement, les grilles et gravats préfèrent leurs slots de catalogue ou les arêtes de la grille 3×3, les départs/sorties/invasions occupent le centre d’une case extérieure, et les objectifs, cryptes, nécromanciens et autres marqueurs centraux occupent le centre exact d’une case de la grille 3×3.
 
 Le catalogue exporté porte la politique `doorPlacement: catalog-preferred` : les slots existants sont proposés en priorité, mais une porte peut aussi utiliser des coordonnées libres. Lorsqu’un slot est choisi, la CLI vérifie que les coordonnées correspondent bien à ce slot après rotation de la tuile.
 

@@ -180,6 +180,11 @@
     background: #a77b27
 }
 
+.catalog-slot.slot-crypt {
+    border-radius: 4px;
+    background: #4d4568
+}
+
 .catalog-slot.slot-spawn {
     background: #7f3f98
 }

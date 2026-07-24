@@ -29,12 +29,25 @@ function validate(name, data) {
   return { status: result.status, output: JSON.parse(result.stdout) };
 }
 
+function validateStrictWithCollection(name, data, collection) {
+  const missionFile = path.join(TEMP_DIR, `${name}.json`);
+  const collectionFile = path.join(TEMP_DIR, `${name}-collection.json`);
+  fs.writeFileSync(missionFile, JSON.stringify(data));
+  fs.writeFileSync(collectionFile, JSON.stringify(collection));
+  const result = spawnSync(process.execPath, [CLI, 'validate', missionFile, '--collection', collectionFile, '--strict', '--json'], { cwd: ROOT, encoding: 'utf8' });
+  return { status: result.status, output: JSON.parse(result.stdout) };
+}
+
 try {
   const contextResult = spawnSync(process.execPath, [CLI, 'context', '--json'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(contextResult.status, 0);
   const context = JSON.parse(contextResult.stdout);
   assert.ok(context.constraints.semanticAudit.tileJunctions);
   assert.ok(context.requiredAgentWorkflow.some(step => step.includes('semantic')));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'start' && marker.product === null && marker.category === 'base'));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'rubble' && marker.product === null && marker.category === 'custom'));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'crypt' && marker.product === 'black-plague' && marker.category === 'unique'));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'chi' && marker.product === 'eternal-empire' && marker.category === 'unique'));
 
   const valid = validate('valid-generated-anchors', mission({
     markers: [
@@ -42,11 +55,28 @@ try {
       { id: 'start-1', type: 'start', tile: 'tile-1', anchor: 'grid-cell-1-1', x: 1 / 6, y: 1 / 6, label: 'S' },
       { id: 'door-free', type: 'door', tile: 'tile-1', x: .2, y: .2, label: 'D' },
       { id: 'objective-1', type: 'objective', tile: 'tile-1', x: .5, y: .5, label: '1' },
-      { id: 'guard-1', type: 'guard', tile: 'tile-1', x: .5, y: .5, label: 'G' }
+      { id: 'guard-1', type: 'guard', tile: 'tile-1', x: .5, y: .5, label: 'G' },
+      { id: 'crypt-1', type: 'crypt', tile: 'tile-1', anchor: 'grid-cell-2-2', x: .5, y: .5, label: 'CR' }
     ]
   }));
   assert.equal(valid.status, 0);
   assert.equal(valid.output.valid, true);
+  assert.ok(context.constraints.markers.includes('crypt'));
+
+  const unavailableMarker = validateStrictWithCollection('unavailable-marker', mission({
+    markers: [
+      { id: 'chi-1', type: 'chi', tile: 'tile-1', anchor: 'grid-cell-2-2', x: .5, y: .5, label: 'χ' }
+    ]
+  }), {
+    format: 'zombicide-collection',
+    version: 1,
+    name: 'Black Plague seulement',
+    ownedProducts: ['black-plague'],
+    tileWhitelist: [],
+    tileBlacklist: []
+  });
+  assert.equal(unavailableMarker.status, 2);
+  assert.ok(unavailableMarker.output.warnings.some(warning => warning.code === 'UNAVAILABLE_MARKER'));
 
   const duplicateAnchor = validate('duplicate-anchor', mission({
     markers: [

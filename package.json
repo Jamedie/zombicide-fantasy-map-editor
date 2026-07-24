@@ -11,7 +11,7 @@
     "dev": "node cli/dev-server.mjs",
     "rules": "node cli/zombicide-map.mjs rules",
     "test": "node tests/cli-rules.test.mjs",
-    "check": "node --check app/scripts/editor.js && node --check app/scripts/catalog-editor.js && node --check cli/dev-server.mjs && node --check cli/zombicide-map.mjs",
+    "check": "node --check app/scripts/token.js && node --check app/scripts/editor.js && node --check app/scripts/catalog-editor.js && node --check cli/dev-server.mjs && node --check cli/zombicide-map.mjs",
     "validate:example": "node cli/zombicide-map.mjs validate examples/mission.json --collection examples/collection.json --catalog examples/catalog.json",
     "render:example": "node cli/zombicide-map.mjs render examples/mission.json --collection examples/collection.json --catalog examples/catalog.json --output examples/mission.svg"
   },

@@ -49,9 +49,11 @@ La disponibilité des boîtes et des tuiles ne doit jamais être codée en dur d
 
 Types reconnus :
 
-`start`, `objective`, `invasion`, `exit`, `door`, `spawn`, `npc`, `vault`, `noise`, `gate`, `rubble`, `guard`, `statue`, `chi`.
+`start`, `objective`, `invasion`, `exit`, `door`, `spawn`, `npc`, `vault`, `crypt`, `noise`, `gate`, `rubble`, `guard`, `statue`, `chi`.
 
 Chaque marqueur référence une instance de tuile existante. Un identifiant de point d’ancrage reste technique : l’interface peut n’afficher que son mode de placement, mais le JSON conserve l’identifiant exact.
+
+Chaque type de marqueur possède aussi une catégorie (`base`, `custom` ou `unique`) exposée par `context --json` dans `constraints.markerCatalog`. Les marqueurs `base` et `custom` n’appartiennent à aucune boîte et restent toujours disponibles. Les marqueurs `unique` possèdent une boîte d’origine ; si une collection est appliquée et que cette boîte n’est pas possédée, ils produisent un avertissement. Avec `--strict`, cet avertissement fait échouer la commande.
 
 ## Portes
 
@@ -97,7 +99,7 @@ Pour ces trois types, la case référencée doit appartenir au périmètre de la
 
 ## Objectifs et autres marqueurs centraux
 
-Les marqueurs `objective`, `spawn` (Nécromancien), `npc`, `vault`, `noise`, `guard`, `statue` et `chi` utilisent par défaut le centre exact d’une case de la grille 3×3. Le premier occupe la case centrale, puis les suivants utilisent les autres centres disponibles.
+Les marqueurs `objective`, `spawn` (Nécromancien), `npc`, `vault`, `crypt`, `noise`, `guard`, `statue` et `chi` utilisent par défaut le centre exact d’une case de la grille 3×3. Le premier occupe la case centrale, puis les suivants utilisent les autres centres disponibles.
 
 Ils acceptent :
 

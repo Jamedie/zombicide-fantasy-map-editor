@@ -412,17 +412,85 @@ button:hover {
 
 .marker-library {
     display: grid;
+    gap: 14px
+}
+
+.marker-product-group {
+    display: grid;
+    gap: 9px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line)
+}
+
+.marker-product-group:last-child {
+    border-bottom: 0;
+    padding-bottom: 0
+}
+
+.marker-product-group.unavailable {
+    opacity: .72
+}
+
+.marker-product-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #f0c765;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em
+}
+
+.marker-product-title span {
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 0;
+    text-transform: none
+}
+
+.marker-group {
+    display: grid;
+    gap: 6px
+}
+
+.marker-group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #d9dde3;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: .08em
+}
+
+.marker-group-title span {
+    color: var(--muted);
+    letter-spacing: 0
+}
+
+.marker-group-grid {
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px
 }
 
 .marker-choice {
-    display: flex;
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
     align-items: center;
     gap: 8px;
     text-align: left;
     padding: 8px;
     background: #20242a
+}
+
+.marker-choice:disabled {
+    cursor: not-allowed
+}
+
+.marker-choice.unavailable {
+    opacity: .45;
+    filter: grayscale(.35)
 }
 
 .marker-swatch,
@@ -439,13 +507,25 @@ button:hover {
     box-shadow: 0 2px 5px #0007
 }
 
-.marker-choice span:last-child {
-    font-size: 10px
+.marker-choice>span:not(.marker-swatch) {
+    font-size: 10px;
+    min-width: 0
+}
+
+.marker-choice small {
+    grid-column: 2;
+    color: var(--muted);
+    font-size: 9px;
+    margin-top: -5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
 }
 
 .marker-invasion,
 .marker-exit,
-.marker-gate {
+.marker-gate,
+.marker-crypt {
     border-radius: 4px
 }
 
@@ -487,6 +567,10 @@ button:hover {
 
 .type-vault {
     background: #a77b27
+}
+
+.type-crypt {
+    background: #4d4568
 }
 
 .type-noise {
@@ -780,6 +864,11 @@ button:hover {
 .marker-node.selected {
     outline: 3px solid var(--gold-2);
     outline-offset: 3px
+}
+
+.marker-node.unavailable {
+    opacity: .5;
+    filter: grayscale(.5)
 }
 
 .marker-node.marker-door {

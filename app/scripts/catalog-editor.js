@@ -10,6 +10,7 @@ const SLOT_TYPES = {
   start: { label: 'Départ', symbol: 'S' }, invasion: { label: 'Invasion', symbol: 'I' },
   exit: { label: 'Sortie', symbol: 'E' }, statue: { label: 'Statue', symbol: 'ST' },
   chi: { label: 'Chi', symbol: 'χ' }, vault: { label: 'Coffre', symbol: 'C' },
+  crypt: { label: 'Zone de crypte', symbol: 'CR' },
   spawn: { label: 'Nécromancien', symbol: 'N' }, guard: { label: 'Garde', symbol: 'G' },
   npc: { label: 'NPC cible', symbol: 'N' },
   noise: { label: 'Bruit', symbol: '!' }, gate: { label: 'Grille', symbol: 'GR' },
@@ -321,7 +322,7 @@ document.addEventListener('keydown', event => {
     setAddSlotMode(false);
     return;
   }
-  const shortcutTypes = { p: 'door', o: 'objective', d: 'start', i: 'invasion', s: 'exit', t: 'statue', x: 'chi', c: 'vault', n: 'spawn', g: 'guard', b: 'noise' };
+  const shortcutTypes = { p: 'door', o: 'objective', d: 'start', i: 'invasion', s: 'exit', t: 'statue', x: 'chi', c: 'vault', k: 'crypt', n: 'spawn', g: 'guard', b: 'noise' };
   const type = shortcutTypes[event.key.toLowerCase()];
   if (type) {
     event.preventDefault();
