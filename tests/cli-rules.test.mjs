@@ -29,6 +29,15 @@ function validate(name, data) {
   return { status: result.status, output: JSON.parse(result.stdout) };
 }
 
+function validateWithCatalog(name, data, catalog) {
+  const missionFile = path.join(TEMP_DIR, `${name}.json`);
+  const catalogFile = path.join(TEMP_DIR, `${name}-catalog.json`);
+  fs.writeFileSync(missionFile, JSON.stringify(data));
+  fs.writeFileSync(catalogFile, JSON.stringify(catalog));
+  const result = spawnSync(process.execPath, [CLI, 'validate', missionFile, '--catalog', catalogFile, '--json'], { cwd: ROOT, encoding: 'utf8' });
+  return { status: result.status, output: JSON.parse(result.stdout) };
+}
+
 function validateStrictWithCollection(name, data, collection) {
   const missionFile = path.join(TEMP_DIR, `${name}.json`);
   const collectionFile = path.join(TEMP_DIR, `${name}-collection.json`);
@@ -43,10 +52,12 @@ try {
   assert.equal(contextResult.status, 0);
   const context = JSON.parse(contextResult.stdout);
   assert.ok(context.constraints.semanticAudit.tileJunctions);
+  assert.ok(context.constraints.interiorZoneSize);
   assert.ok(context.requiredAgentWorkflow.some(step => step.includes('semantic')));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'start' && marker.product === null && marker.category === 'base'));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'rubble' && marker.product === null && marker.category === 'custom'));
-  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'crypt' && marker.product === 'black-plague' && marker.category === 'unique'));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'crypt' && marker.product === 'black-plague' && marker.category === 'unique' && marker.limit === 2));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'crypt-yellow' && marker.product === 'black-plague' && marker.category === 'unique' && marker.limit === 2));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'chi' && marker.product === 'eternal-empire' && marker.category === 'unique'));
 
   const valid = validate('valid-generated-anchors', mission({
@@ -77,6 +88,23 @@ try {
   });
   assert.equal(unavailableMarker.status, 2);
   assert.ok(unavailableMarker.output.warnings.some(warning => warning.code === 'UNAVAILABLE_MARKER'));
+
+  const markerLimit = validateStrictWithCollection('marker-limit', mission({
+    markers: [
+      { id: 'crypt-yellow-1', type: 'crypt-yellow', tile: 'tile-1', anchor: 'grid-cell-1-1', x: 1 / 6, y: 1 / 6, label: 'CR' },
+      { id: 'crypt-yellow-2', type: 'crypt-yellow', tile: 'tile-1', anchor: 'grid-cell-1-2', x: .5, y: 1 / 6, label: 'CR' },
+      { id: 'crypt-yellow-3', type: 'crypt-yellow', tile: 'tile-1', anchor: 'grid-cell-1-3', x: 5 / 6, y: 1 / 6, label: 'CR' }
+    ]
+  }), {
+    format: 'zombicide-collection',
+    version: 1,
+    name: 'Black Plague',
+    ownedProducts: ['black-plague'],
+    tileWhitelist: [],
+    tileBlacklist: []
+  });
+  assert.equal(markerLimit.status, 2);
+  assert.ok(markerLimit.output.warnings.some(warning => warning.code === 'MARKER_LIMIT'));
 
   const duplicateAnchor = validate('duplicate-anchor', mission({
     markers: [
@@ -109,7 +137,44 @@ try {
   assert.equal(mismatchedAnchor.status, 2);
   assert.ok(mismatchedAnchor.output.errors.some(error => error.code === 'SLOT_POSITION'));
 
-  console.log('✓ Règles CLI testées : ancres générées, portes libres, doublons, invasions et coordonnées.');
+  const requiredDoorCatalog = {
+    format: 'zombicide-catalog',
+    version: 2,
+    tiles: [{
+      id: '1r',
+      slots: [{ id: '1r-door-required', type: 'door', x: .333, y: .833, orientation: 'vertical', requiresDoor: true }]
+    }]
+  };
+  const missingRequiredDoor = validateWithCatalog('missing-required-door', mission(), requiredDoorCatalog);
+  assert.equal(missingRequiredDoor.status, 2);
+  assert.ok(missingRequiredDoor.output.errors.some(error => error.code === 'REQUIRED_DOOR_MISSING'));
+
+  const presentRequiredDoor = validateWithCatalog('present-required-door', mission({
+    markers: [{ id: 'door-required', type: 'door', tile: 'tile-1', anchor: '1r-door-required', x: .333, y: .833, label: 'D' }]
+  }), requiredDoorCatalog);
+  assert.equal(presentRequiredDoor.status, 0);
+  assert.equal(presentRequiredDoor.output.valid, true);
+
+  const largeInteriorCatalog = {
+    format: 'zombicide-catalog',
+    version: 2,
+    tiles: [{
+      id: '1r',
+      slots: [{ id: '1r-door-separator', type: 'door', x: .5, y: .667, orientation: 'horizontal' }],
+      interiorZones: [{ id: 'great-hall', label: 'Grande salle', cellCount: 5, separatorDoorIds: ['1r-door-separator'] }]
+    }]
+  };
+  const largeInteriorMissingDoor = validateWithCatalog('large-interior-missing-door', mission(), largeInteriorCatalog);
+  assert.equal(largeInteriorMissingDoor.status, 2);
+  assert.ok(largeInteriorMissingDoor.output.errors.some(error => error.code === 'INTERIOR_ZONE_TOO_LARGE'));
+
+  const largeInteriorWithDoor = validateWithCatalog('large-interior-with-door', mission({
+    markers: [{ id: 'door-separator', type: 'door', tile: 'tile-1', anchor: '1r-door-separator', x: .5, y: .667, label: 'D' }]
+  }), largeInteriorCatalog);
+  assert.equal(largeInteriorWithDoor.status, 0);
+  assert.equal(largeInteriorWithDoor.output.valid, true);
+
+  console.log('✓ Règles CLI testées : ancres générées, portes libres, portes obligatoires, intérieurs trop grands, doublons, invasions et coordonnées.');
 } finally {
   fs.rmSync(TEMP_DIR, { recursive: true, force: true });
 }

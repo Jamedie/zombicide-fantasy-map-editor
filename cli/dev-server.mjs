@@ -8,8 +8,8 @@ const projectRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const appRoot = resolve(projectRoot, "app");
 const port = Number.parseInt(process.env.PORT || "5173", 10);
 const host = "127.0.0.1";
-const defaultCatalogPath = resolve(projectRoot, "config/default-catalog.json");
-const defaultCatalogTemporaryPath = resolve(projectRoot, "config/.default-catalog.json.tmp");
+const defaultCatalogPath = resolve(appRoot, "assets/config/default-catalog.json");
+const defaultCatalogTemporaryPath = resolve(appRoot, "assets/config/.default-catalog.json.tmp");
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -73,13 +73,13 @@ const server = createServer(async (request, response) => {
       }
       await writeFile(defaultCatalogTemporaryPath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
       await rename(defaultCatalogTemporaryPath, defaultCatalogPath);
-      sendJson(response, 200, { ok: true, path: "config/default-catalog.json", tiles: data.tiles.length });
+      sendJson(response, 200, { ok: true, path: "app/assets/config/default-catalog.json", tiles: data.tiles.length });
       return;
     }
 
     const requestedPath = pathname === "/" ? "index.html" : pathname.slice(1);
     const servesDefaultCatalog = pathname === "/config/default-catalog.json";
-    const staticRoot = servesDefaultCatalog ? projectRoot : appRoot;
+    const staticRoot = appRoot;
     const filePath = servesDefaultCatalog ? defaultCatalogPath : resolve(staticRoot, requestedPath);
 
     if (filePath !== staticRoot && !filePath.startsWith(`${staticRoot}${sep}`)) {

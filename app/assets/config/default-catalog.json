@@ -98,6 +98,13 @@
           "x": 0.02,
           "y": 0.167,
           "orientation": "vertical"
+        },
+        {
+          "id": "1r-door-13",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.833,
+          "orientation": "vertical"
         }
       ],
       "doorAnchors": [
@@ -183,6 +190,13 @@
           "type": "door",
           "x": 0.02,
           "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "1r-door-13",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.833,
           "orientation": "vertical"
         }
       ]
@@ -428,6 +442,20 @@
           "x": 0.167,
           "y": 0.98,
           "orientation": "horizontal"
+        },
+        {
+          "id": "2r-door-13",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "2r-door-14",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
+          "orientation": "horizontal"
         }
       ],
       "doorAnchors": [
@@ -513,6 +541,20 @@
           "type": "door",
           "x": 0.167,
           "y": 0.98,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "2r-door-13",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "2r-door-14",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
           "orientation": "horizontal"
         }
       ]
@@ -635,6 +677,27 @@
           "x": 0.5,
           "y": 0.333,
           "orientation": "horizontal"
+        },
+        {
+          "id": "2v-door-17",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "2v-door-18",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "2v-door-19",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.167,
+          "orientation": "vertical"
         }
       ],
       "doorAnchors": [
@@ -749,6 +812,27 @@
           "x": 0.5,
           "y": 0.333,
           "orientation": "horizontal"
+        },
+        {
+          "id": "2v-door-17",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "2v-door-18",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "2v-door-19",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.167,
+          "orientation": "vertical"
         }
       ]
     },
@@ -1077,6 +1161,20 @@
           "x": 0.167,
           "y": 0.667,
           "orientation": "horizontal"
+        },
+        {
+          "id": "3v-door-13",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "3v-door-14",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
         }
       ],
       "doorAnchors": [
@@ -1161,6 +1259,20 @@
           "id": "3v-door-12",
           "type": "door",
           "x": 0.167,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "3v-door-13",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "3v-door-14",
+          "type": "door",
+          "x": 0.833,
           "y": 0.667,
           "orientation": "horizontal"
         }
@@ -1284,6 +1396,20 @@
           "x": 0.02,
           "y": 0.167,
           "orientation": "vertical"
+        },
+        {
+          "id": "4r-door-17",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "4r-door-18",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
         }
       ],
       "doorAnchors": [
@@ -1398,6 +1524,20 @@
           "x": 0.02,
           "y": 0.167,
           "orientation": "vertical"
+        },
+        {
+          "id": "4r-door-17",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "4r-door-18",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
         }
       ]
     },
@@ -1754,6 +1894,13 @@
           "x": 0.02,
           "y": 0.167,
           "orientation": "horizontal"
+        },
+        {
+          "id": "5r-door-17",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.167,
+          "orientation": "vertical"
         }
       ],
       "doorAnchors": [
@@ -1868,6 +2015,13 @@
           "x": 0.02,
           "y": 0.167,
           "orientation": "horizontal"
+        },
+        {
+          "id": "5r-door-17",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.167,
+          "orientation": "vertical"
         }
       ]
     },
@@ -1989,6 +2143,34 @@
           "x": 0.833,
           "y": 0.02,
           "orientation": "horizontal"
+        },
+        {
+          "id": "5v-door-17",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "5v-door-18",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "5v-door-19",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "5v-door-20",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.667,
+          "orientation": "horizontal"
         }
       ],
       "doorAnchors": [
@@ -2102,6 +2284,34 @@
           "type": "door",
           "x": 0.833,
           "y": 0.02,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "5v-door-17",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "5v-door-18",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "5v-door-19",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "5v-door-20",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.667,
           "orientation": "horizontal"
         }
       ]
@@ -2263,6 +2473,20 @@
           "x": 0.98,
           "y": 0.167,
           "orientation": "vertical"
+        },
+        {
+          "id": "6v-door-13",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "6v-door-14",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.167,
+          "orientation": "vertical"
         }
       ],
       "doorAnchors": [
@@ -2347,6 +2571,20 @@
           "id": "6v-door-12",
           "type": "door",
           "x": 0.98,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "6v-door-13",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "6v-door-14",
+          "type": "door",
+          "x": 0.667,
           "y": 0.167,
           "orientation": "vertical"
         }
@@ -2456,6 +2694,20 @@
           "x": 0.667,
           "y": 0.833,
           "orientation": "vertical"
+        },
+        {
+          "id": "7r-door-15",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "7r-door-16",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
         }
       ],
       "doorAnchors": [
@@ -2556,6 +2808,20 @@
           "x": 0.667,
           "y": 0.833,
           "orientation": "vertical"
+        },
+        {
+          "id": "7r-door-15",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "7r-door-16",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
         }
       ]
     },
@@ -2912,6 +3178,13 @@
           "x": 0.98,
           "y": 0.833,
           "orientation": "vertical"
+        },
+        {
+          "id": "8r-door-17",
+          "type": "door",
+          "x": 0.54,
+          "y": 0.169,
+          "orientation": "vertical"
         }
       ],
       "doorAnchors": [
@@ -3025,6 +3298,13 @@
           "type": "door",
           "x": 0.98,
           "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "8r-door-17",
+          "type": "door",
+          "x": 0.54,
+          "y": 0.169,
           "orientation": "vertical"
         }
       ]
@@ -3382,6 +3662,20 @@
           "x": 0.5,
           "y": 0.02,
           "orientation": "horizontal"
+        },
+        {
+          "id": "9r-door-17",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "9r-door-18",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
         }
       ],
       "doorAnchors": [
@@ -3495,6 +3789,20 @@
           "type": "door",
           "x": 0.5,
           "y": 0.02,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "9r-door-17",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "9r-door-18",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
           "orientation": "horizontal"
         }
       ]
@@ -3718,8 +4026,38 @@
       "product": "wulfsburg",
       "face": "R",
       "image": "assets/tiles/11R.webp",
-      "slots": [],
-      "doorAnchors": []
+      "slots": [
+        {
+          "id": "11r-door-01",
+          "type": "door",
+          "x": 0.02,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "11r-door-02",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.98,
+          "orientation": "horizontal"
+        }
+      ],
+      "doorAnchors": [
+        {
+          "id": "11r-door-01",
+          "type": "door",
+          "x": 0.02,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "11r-door-02",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.98,
+          "orientation": "horizontal"
+        }
+      ]
     },
     {
       "id": "11v",
@@ -4056,8 +4394,192 @@
       "product": "green-horde",
       "face": "R",
       "image": "assets/tiles/14R.webp",
-      "slots": [],
-      "doorAnchors": []
+      "slots": [
+        {
+          "id": "14r-door-01",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-02",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-03",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.5,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-04",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-05",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.98,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-06",
+          "type": "door",
+          "x": 0.02,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-07",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.5,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-08",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-09",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-10",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.02,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-11",
+          "type": "door",
+          "x": 0.98,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-12",
+          "type": "door",
+          "x": 0.98,
+          "y": 0.5,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-13",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        }
+      ],
+      "doorAnchors": [
+        {
+          "id": "14r-door-01",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-02",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-03",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.5,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-04",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-05",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.98,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-06",
+          "type": "door",
+          "x": 0.02,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-07",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.5,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-08",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-09",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-10",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.02,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14r-door-11",
+          "type": "door",
+          "x": 0.98,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-12",
+          "type": "door",
+          "x": 0.98,
+          "y": 0.5,
+          "orientation": "vertical"
+        },
+        {
+          "id": "14r-door-13",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        }
+      ]
     },
     {
       "id": "14v",
@@ -4065,8 +4587,38 @@
       "product": "green-horde",
       "face": "V",
       "image": "assets/tiles/14V.webp",
-      "slots": [],
-      "doorAnchors": []
+      "slots": [
+        {
+          "id": "14v-door-01",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14v-door-02",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        }
+      ],
+      "doorAnchors": [
+        {
+          "id": "14v-door-01",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "14v-door-02",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        }
+      ]
     },
     {
       "id": "15r",
@@ -4074,8 +4626,164 @@
       "product": "green-horde",
       "face": "R",
       "image": "assets/tiles/15R.webp",
-      "slots": [],
-      "doorAnchors": []
+      "slots": [
+        {
+          "id": "15r-door-01",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "15r-door-02",
+          "type": "door",
+          "x": 0.5,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-03",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-04",
+          "type": "door",
+          "x": 0.02,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "15r-door-05",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.02,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-06",
+          "type": "door",
+          "x": 0.5,
+          "y": 0.02,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-07",
+          "type": "door",
+          "x": 0.5,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-08",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-09",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "15r-door-10",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.98,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-11",
+          "type": "door",
+          "x": 0.5,
+          "y": 0.98,
+          "orientation": "horizontal"
+        }
+      ],
+      "doorAnchors": [
+        {
+          "id": "15r-door-01",
+          "type": "door",
+          "x": 0.667,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "15r-door-02",
+          "type": "door",
+          "x": 0.5,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-03",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.333,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-04",
+          "type": "door",
+          "x": 0.02,
+          "y": 0.167,
+          "orientation": "vertical"
+        },
+        {
+          "id": "15r-door-05",
+          "type": "door",
+          "x": 0.167,
+          "y": 0.02,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-06",
+          "type": "door",
+          "x": 0.5,
+          "y": 0.02,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-07",
+          "type": "door",
+          "x": 0.5,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-08",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.667,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-09",
+          "type": "door",
+          "x": 0.333,
+          "y": 0.833,
+          "orientation": "vertical"
+        },
+        {
+          "id": "15r-door-10",
+          "type": "door",
+          "x": 0.833,
+          "y": 0.98,
+          "orientation": "horizontal"
+        },
+        {
+          "id": "15r-door-11",
+          "type": "door",
+          "x": 0.5,
+          "y": 0.98,
+          "orientation": "horizontal"
+        }
+      ]
     },
     {
       "id": "15v",

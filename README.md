@@ -29,6 +29,10 @@ Les marqueurs sont triés dans la palette en trois temps : tokens de base, token
 
 Deux slots de porte placés face à face sur la jonction de deux tuiles représentent une seule connexion logique. L’éditeur centre la porte sur la séparation et interdit d’ajouter un second marqueur sur cette même connexion ; la CLI applique la même règle.
 
+Un slot de porte peut aussi être marqué comme obligatoire dans le catalogue. Utilisez ce réglage pour les ouvertures imprimées d’une zone de bâtiment vers l’extérieur : la CLI rejettera alors toute mission qui utilise cette tuile sans marqueur Porte sur cette connexion.
+
+Le catalogue peut également déclarer des `interiorZones`. Une zone intérieure de plus de 4 cases doit alors être séparée par une porte ancrée sur l’un de ses `separatorDoorIds`.
+
 Les marqueurs disposent également d’un placement initial adapté : les portes préfèrent leurs slots mais restent déplaçables librement, les grilles et gravats préfèrent leurs slots de catalogue ou les arêtes de la grille 3×3, les départs/sorties/invasions occupent le centre d’une case extérieure, et les objectifs, cryptes, nécromanciens et autres marqueurs centraux occupent le centre exact d’une case de la grille 3×3.
 
 Le catalogue exporté porte la politique `doorPlacement: catalog-preferred` : les slots existants sont proposés en priorité, mais une porte peut aussi utiliser des coordonnées libres. Lorsqu’un slot est choisi, la CLI vérifie que les coordonnées correspondent bien à ce slot après rotation de la tuile.

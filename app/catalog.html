@@ -84,6 +84,7 @@
           <label>Identifiant stable<input id="slot-id" disabled /></label>
           <label>Type<select id="slot-type"><option value="door">Porte</option><option value="objective">Objectif</option><option value="start">Départ</option><option value="invasion">Invasion</option><option value="exit">Sortie</option><option value="statue">Statue</option><option value="chi">Chi</option><option value="vault">Coffre</option><option value="crypt">Crypte</option><option value="spawn">Nécromancien</option><option value="guard">Garde</option><option value="noise">Bruit</option><option value="gate">Grille</option><option value="rubble">Gravats</option></select></label>
           <label id="slot-orientation-field">Orientation<select id="slot-orientation"><option value="horizontal">Horizontale</option><option value="vertical">Verticale</option></select></label>
+          <label id="slot-required-door-field" class="check-row"><input id="slot-required-door" type="checkbox" /> Porte obligatoire</label>
           <div class="coordinate-grid"><label>X (%)<input id="slot-x" type="number" min="0" max="100" step="0.1" /></label><label>Y (%)<input id="slot-y" type="number" min="0" max="100" step="0.1" /></label></div>
           <button id="delete-catalog-slot" class="wide-button danger" type="button">Supprimer ce slot</button>
         </form>
@@ -95,6 +96,6 @@
       </aside>
     </main>
     <div id="catalog-toast" class="toast" hidden></div>
-    <script src="scripts/catalog-editor.js"></script>
+    <script type="module" src="scripts/catalog-editor.js"></script>
   </body>
 </html>

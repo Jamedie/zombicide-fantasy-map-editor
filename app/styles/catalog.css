@@ -163,6 +163,18 @@
     font-size: 11px
 }
 
+.check-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted);
+    font-size: 11px
+}
+
+.check-row input {
+    accent-color: var(--gold)
+}
+
 .catalog-canvas-area {
     flex: 1;
     min-height: 0;

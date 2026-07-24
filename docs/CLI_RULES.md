@@ -49,11 +49,13 @@ La disponibilité des boîtes et des tuiles ne doit jamais être codée en dur d
 
 Types reconnus :
 
-`start`, `objective`, `invasion`, `exit`, `door`, `spawn`, `npc`, `vault`, `crypt`, `noise`, `gate`, `rubble`, `guard`, `statue`, `chi`.
+`start`, `objective`, `invasion`, `exit`, `door`, `spawn`, `npc`, `vault`, `crypt`, `crypt-yellow`, `noise`, `gate`, `rubble`, `guard`, `statue`, `chi`.
 
 Chaque marqueur référence une instance de tuile existante. Un identifiant de point d’ancrage reste technique : l’interface peut n’afficher que son mode de placement, mais le JSON conserve l’identifiant exact.
 
 Chaque type de marqueur possède aussi une catégorie (`base`, `custom` ou `unique`) exposée par `context --json` dans `constraints.markerCatalog`. Les marqueurs `base` et `custom` n’appartiennent à aucune boîte et restent toujours disponibles. Les marqueurs `unique` possèdent une boîte d’origine ; si une collection est appliquée et que cette boîte n’est pas possédée, ils produisent un avertissement. Avec `--strict`, cet avertissement fait échouer la commande.
+
+Un marqueur peut aussi exposer `colors` pour représenter plusieurs couleurs sur un même token, et `limit` pour plafonner le nombre d’exemplaires sur une carte. Une limite vaut `null` tant qu’elle n’est pas renseignée ; si elle est dépassée, la CLI produit un avertissement. Avec `--strict`, cet avertissement fait échouer la commande.
 
 ## Portes
 
@@ -63,6 +65,17 @@ Chaque type de marqueur possède aussi une catégorie (`base`, `custom` ou `uniq
 - Deux slots opposés sur la séparation de deux tuiles représentent une seule connexion logique.
 - Une connexion logique ne peut contenir qu’une seule porte ancrée, même si chaque tuile possède son propre slot.
 - Une porte libre ne contient pas d’`anchor` et utilise directement ses coordonnées normalisées.
+- Un slot `door` de catalogue peut porter `requiresDoor: true`. Ce cas représente une ouverture imprimée d’une Zone de bâtiment vers l’extérieur ou vers une rue, comme une porte ouverte visible sur l’illustration. Toute mission qui utilise cette tuile doit alors placer un marqueur `door` sur cette connexion logique.
+- Une porte requise par `requiresDoor: true` doit rester ancrée à un slot de la connexion concernée ; un marqueur libre proche visuellement ne suffit pas.
+
+## Taille des intérieurs
+
+- Un intérieur de bâtiment ne doit pas former une zone ouverte de plus de 4 cases sans séparation.
+- Le catalogue peut décrire ces zones dans `interiorZones`.
+- Chaque zone intérieure doit avoir un `id` et un `cellCount`, ou une liste `cells` dont la longueur sert de nombre de cases.
+- `maxOpenCells` vaut 4 par défaut.
+- Si `cellCount` dépasse `maxOpenCells`, la zone doit déclarer au moins un slot de porte dans `separatorDoorIds`, et la mission doit placer un marqueur `door` ancré sur l’un de ces slots.
+- Un marqueur de porte libre ne suffit pas pour séparer un grand intérieur : la porte doit être ancrée au slot séparateur prévu par le catalogue.
 
 ## Grilles et gravats
 
@@ -99,7 +112,7 @@ Pour ces trois types, la case référencée doit appartenir au périmètre de la
 
 ## Objectifs et autres marqueurs centraux
 
-Les marqueurs `objective`, `spawn` (Nécromancien), `npc`, `vault`, `crypt`, `noise`, `guard`, `statue` et `chi` utilisent par défaut le centre exact d’une case de la grille 3×3. Le premier occupe la case centrale, puis les suivants utilisent les autres centres disponibles.
+Les marqueurs `objective`, `spawn` (Nécromancien), `npc`, `vault`, `crypt`, `crypt-yellow`, `noise`, `guard`, `statue` et `chi` utilisent par défaut le centre exact d’une case de la grille 3×3. Le premier occupe la case centrale, puis les suivants utilisent les autres centres disponibles.
 
 Ils acceptent :
 
@@ -217,9 +230,11 @@ Une IA doit pouvoir répondre « oui » à chaque ligne applicable :
 
 ## Catalogue et points d’ancrage
 
-- `config/default-catalog.json` est chargé automatiquement par la CLI.
+- `app/assets/config/default-catalog.json` est chargé automatiquement par la CLI.
 - `--catalog <fichier>` applique ensuite les remplacements du catalogue fourni.
 - Un slot doit avoir un `id`, un `type`, un `x` et un `y` valides.
+- Un slot `door` peut avoir `requiresDoor: true` pour rendre le marqueur Porte obligatoire sur cette ouverture.
+- `interiorZones` peut déclarer les grandes zones intérieures à contrôler. Exemple : `{ "id": "great-hall", "cellCount": 5, "separatorDoorIds": ["1r-door-02"] }`.
 - Un slot de catalogue tourne avec la tuile.
 - Les points générés `grid-edge-*` et `grid-cell-*` restent fixes dans la grille.
 - Les anciens identifiants `grid-inset-*` restent acceptés par la CLI pour la compatibilité des missions déjà sauvegardées.

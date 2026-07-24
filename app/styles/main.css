@@ -525,7 +525,8 @@ button:hover {
 .marker-invasion,
 .marker-exit,
 .marker-gate,
-.marker-crypt {
+.marker-crypt,
+.marker-crypt-yellow {
     border-radius: 4px
 }
 
@@ -571,6 +572,10 @@ button:hover {
 
 .type-crypt {
     background: #4d4568
+}
+
+.type-crypt-yellow {
+    background: #d7b33f
 }
 
 .type-noise {

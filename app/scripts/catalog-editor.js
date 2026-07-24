@@ -1,26 +1,10 @@
-const PRODUCTS = [
-  ['black-plague', 'Black Plague', 1, 9], ['wulfsburg', 'Wulfsburg', 10, 11],
-  ['green-horde', 'Green Horde', 12, 20], ['friends-and-foes', 'Friends and Foes', 21, 25],
-  ['white-death', 'White Death', 26, 34], ['eternal-empire', 'Eternal Empire', 35, 38],
-  ['tmnt-timecrash', 'TMNT Timecrash', 39, 42]
-].map(([id, name, from, to]) => ({ id, name, from, to }));
+import { TOKEN_MARKERS } from './token.js';
+import { PRODUCTS, createBaseCatalog, productName as sharedProductName } from './data.js';
 
-const SLOT_TYPES = {
-  door: { label: 'Porte', symbol: 'D' }, objective: { label: 'Objectif', symbol: 'O' },
-  start: { label: 'Départ', symbol: 'S' }, invasion: { label: 'Invasion', symbol: 'I' },
-  exit: { label: 'Sortie', symbol: 'E' }, statue: { label: 'Statue', symbol: 'ST' },
-  chi: { label: 'Chi', symbol: 'χ' }, vault: { label: 'Coffre', symbol: 'C' },
-  crypt: { label: 'Zone de crypte', symbol: 'CR' },
-  spawn: { label: 'Nécromancien', symbol: 'N' }, guard: { label: 'Garde', symbol: 'G' },
-  npc: { label: 'NPC cible', symbol: 'N' },
-  noise: { label: 'Bruit', symbol: '!' }, gate: { label: 'Grille', symbol: 'GR' },
-  rubble: { label: 'Gravats', symbol: 'X' }
-};
+const SLOT_SYMBOLS = { objective: 'O', invasion: 'I', gate: 'GR' };
+const SLOT_TYPES = Object.fromEntries(TOKEN_MARKERS.map(marker => [marker.type, { label: marker.name, symbol: SLOT_SYMBOLS[marker.type] || marker.label }]));
 
-const baseCatalog = PRODUCTS.flatMap(product => Array.from({ length: product.to - product.from + 1 }, (_, offset) => product.from + offset).flatMap(number => ['R', 'V'].map(face => ({
-  id: `${number}${face}`.toLowerCase(), code: `${number}${face}`, face, product: product.id,
-  image: `assets/tiles/${number}${face}.webp`, source: 'https://zombicide.fandom.com/wiki/Fantasy_Tiles'
-}))));
+const baseCatalog = createBaseCatalog();
 const customCatalog = readStorage('zombicide-custom-catalog', []);
 const catalog = [...baseCatalog, ...customCatalog];
 let defaultOverrides = {};
@@ -43,11 +27,15 @@ function save() {
   queuePersonalFileSave();
 }
 function tileById(id) { return catalog.find(tile => tile.id === id); }
-function productName(id) { return PRODUCTS.find(product => product.id === id)?.name || 'Tuiles importées'; }
+function productName(id) { return sharedProductName(id, 'Tuiles importées'); }
 function slots(tileId) {
   const data = Object.prototype.hasOwnProperty.call(overrides, tileId) ? overrides[tileId] : (defaultOverrides[tileId] || {});
   if (Array.isArray(data.slots)) return data.slots;
   return (data.doorAnchors || []).map(anchor => ({ ...anchor, type: 'door', orientation: anchor.orientation || 'horizontal' }));
+}
+function interiorZones(tileId) {
+  const data = Object.prototype.hasOwnProperty.call(overrides, tileId) ? overrides[tileId] : (defaultOverrides[tileId] || {});
+  return Array.isArray(data.interiorZones) ? data.interiorZones : [];
 }
 function setSlots(tileId, values) { overrides[tileId] = { ...(overrides[tileId] || {}), slots: values, doorAnchors: values.filter(slot => slot.type === 'door') }; }
 function esc(value) { const node = document.createElement('div'); node.textContent = String(value ?? ''); return node.innerHTML; }
@@ -55,6 +43,11 @@ function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function assetUrl(source) { try { return new URL(source, document.baseURI).href; } catch { return source || ''; } }
 function toast(message, error = false) { const node = document.querySelector('#catalog-toast'); node.textContent = message; node.hidden = false; node.classList.toggle('error', error); clearTimeout(toast.timer); toast.timer = setTimeout(() => node.hidden = true, 2400); }
 function slotMeta(type) { return SLOT_TYPES[type] || { label: type, symbol: '?' }; }
+function renderSlotTypeOptions() {
+  const options = Object.entries(SLOT_TYPES).map(([type, meta]) => `<option value="${type}">${esc(meta.label)}</option>`).join('');
+  document.querySelector('#new-slot-type').innerHTML = options;
+  document.querySelector('#slot-type').innerHTML = options;
+}
 
 function render() {
   if (!tileById(selectedTileId)) selectedTileId = catalog[0]?.id || null;
@@ -81,16 +74,18 @@ function renderStage() {
   const snapTargets = doorGridCandidates().map(target => `<i class="catalog-snap-target ${target.orientation}" style="left:${target.x * 100}%;top:${target.y * 100}%"></i>`).join('');
   document.querySelector('#catalog-stage').innerHTML = `<img src="${esc(assetUrl(tile.image))}" alt="Tuile ${esc(tile.code)}"/><div class="catalog-snap-grid" aria-hidden="true">${snapTargets}</div>${slots(tile.id).map(slot => {
     const meta = slotMeta(slot.type); const vertical = slot.type === 'door' && slot.orientation === 'vertical';
-    return `<button class="catalog-slot slot-${slot.type} ${vertical ? 'vertical' : ''} ${slot.id === selectedSlotId ? 'selected' : ''}" data-slot-id="${esc(slot.id)}" style="left:${slot.x * 100}%;top:${slot.y * 100}%" title="${esc(meta.label)} · ${esc(slot.id)}"><span>${esc(meta.symbol)}</span></button>`;
+    return `<button class="catalog-slot slot-${slot.type} ${vertical ? 'vertical' : ''} ${slot.requiresDoor ? 'required-door' : ''} ${slot.id === selectedSlotId ? 'selected' : ''}" data-slot-id="${esc(slot.id)}" style="left:${slot.x * 100}%;top:${slot.y * 100}%" title="${esc(meta.label)} · ${esc(slot.id)}${slot.requiresDoor ? ' · Porte obligatoire' : ''}"><span>${esc(meta.symbol)}</span></button>`;
   }).join('')}`;
 }
 function renderInspector() {
   const currentSlots = slots(selectedTileId); document.querySelector('#current-slot-count').textContent = String(currentSlots.length);
-  document.querySelector('#catalog-slot-list').innerHTML = currentSlots.map(slot => { const meta = slotMeta(slot.type); return `<button class="slot-list-button ${slot.id === selectedSlotId ? 'active' : ''}" data-list-slot="${esc(slot.id)}"><i class="slot-orientation-icon">${esc(meta.symbol)}</i><span>${esc(meta.label)}</span><small>${esc(slot.id)}</small></button>`; }).join('') || '<p class="catalog-slot-empty">Aucun slot : un agent ne dispose d’aucun emplacement prédéfini sur cette face.</p>';
+  document.querySelector('#catalog-slot-list').innerHTML = currentSlots.map(slot => { const meta = slotMeta(slot.type); return `<button class="slot-list-button ${slot.id === selectedSlotId ? 'active' : ''}" data-list-slot="${esc(slot.id)}"><i class="slot-orientation-icon">${esc(meta.symbol)}</i><span>${esc(meta.label)}${slot.requiresDoor ? ' obligatoire' : ''}</span><small>${esc(slot.id)}</small></button>`; }).join('') || '<p class="catalog-slot-empty">Aucun slot : un agent ne dispose d’aucun emplacement prédéfini sur cette face.</p>';
   const slot = currentSlots.find(entry => entry.id === selectedSlotId); document.querySelector('#empty-slot-inspector').hidden = !!slot; document.querySelector('#slot-inspector-form').hidden = !slot;
   if (slot) {
     document.querySelector('#slot-id').value = slot.id; document.querySelector('#slot-type').value = slot.type;
     document.querySelector('#slot-orientation').value = slot.orientation || 'horizontal'; document.querySelector('#slot-orientation-field').hidden = slot.type !== 'door';
+    document.querySelector('#slot-required-door-field').hidden = slot.type !== 'door';
+    document.querySelector('#slot-required-door').checked = !!slot.requiresDoor;
     document.querySelector('#slot-x').value = Math.round(slot.x * 1000) / 10; document.querySelector('#slot-y').value = Math.round(slot.y * 1000) / 10;
   }
 }
@@ -133,7 +128,7 @@ function snapSlotPosition(point, type, forcedOrientation) {
   );
 }
 function catalogData() {
-  return { format: 'zombicide-catalog', version: 2, source: 'https://zombicide.fandom.com/wiki/Fantasy_Tiles', slotPolicy: { doorPlacement: 'catalog-preferred', otherPlacement: 'catalog-preferred', freeDoorCoordinates: true }, tiles: catalog.map(tile => ({ id: tile.id, code: tile.code, product: tile.product, face: tile.face, image: tile.image, slots: slots(tile.id), doorAnchors: slots(tile.id).filter(slot => slot.type === 'door') })) };
+  return { format: 'zombicide-catalog', version: 2, source: 'https://zombicide.fandom.com/wiki/Fantasy_Tiles', slotPolicy: { doorPlacement: 'catalog-preferred', otherPlacement: 'catalog-preferred', freeDoorCoordinates: true }, tiles: catalog.map(tile => ({ id: tile.id, code: tile.code, product: tile.product, face: tile.face, image: tile.image, slots: slots(tile.id), doorAnchors: slots(tile.id).filter(slot => slot.type === 'door'), interiorZones: interiorZones(tile.id) })) };
 }
 function applyCatalogData(data, onlyMissing = false) {
   if (data?.format !== 'zombicide-catalog' || !Array.isArray(data.tiles)) throw new Error('Catalogue invalide');
@@ -143,22 +138,30 @@ function applyCatalogData(data, onlyMissing = false) {
     const valid = incoming.every(slot => slot.id && SLOT_TYPES[slot.type || 'door'] && Number.isFinite(slot.x) && Number.isFinite(slot.y) && slot.x >= 0 && slot.x <= 1 && slot.y >= 0 && slot.y <= 1);
     if (valid) {
       const normalized = incoming.map(slot => ({ ...slot, type: slot.type || 'door', ...(slot.type === 'door' || !slot.type ? { orientation: slot.orientation || 'horizontal' } : {}) }));
-      if (onlyMissing) defaultOverrides[entry.id] = { slots: normalized, doorAnchors: normalized.filter(slot => slot.type === 'door') };
-      else setSlots(entry.id, normalized);
+      const zones = Array.isArray(entry.interiorZones) ? entry.interiorZones : [];
+      if (onlyMissing) defaultOverrides[entry.id] = { slots: normalized, doorAnchors: normalized.filter(slot => slot.type === 'door'), interiorZones: zones };
+      else {
+        setSlots(entry.id, normalized);
+        overrides[entry.id].interiorZones = zones;
+      }
     }
   }
 }
 function exportCatalog() {
   const link = document.createElement('a'); const url = URL.createObjectURL(new Blob([JSON.stringify(catalogData(), null, 2)], { type: 'application/json' })); link.href = url; link.download = 'catalogue-zombicide-fantasy.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+function canSaveProjectCatalog() {
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname === '[::1]' ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(hostname);
+}
 async function saveProjectCatalog() {
   const button = document.querySelector('#catalog-save-project');
-
-  // si l'adresse n'est pas localhost:5173 ou [IP_ADDRESS]:5173 on cache le boutton
-  if (window.location.hostname !== 'localhost' && window.location.hostname !== '[IP_ADDRESS]') {
-    button.style.display = 'none';
-    return;
-  }
 
   const previousLabel = button.textContent;
   button.disabled = true;
@@ -288,22 +291,24 @@ stage.addEventListener('pointercancel', () => { dragState = null; render(); });
 document.querySelector('#catalog-slot-list').addEventListener('click', event => { const button = event.target.closest('[data-list-slot]'); if (button) selectSlot(button.dataset.listSlot); });
 document.querySelector('#slot-type').addEventListener('change', event => {
   const current = slots(selectedTileId).find(slot => slot.id === selectedSlotId); const tile = tileById(selectedTileId); if (!current || !tile) return; const newId = nextSlotId(tile, event.target.value);
-  setSlots(tile.id, slots(tile.id).map(slot => slot.id === selectedSlotId ? { ...slot, id: newId, type: event.target.value, ...(event.target.value === 'door' ? { orientation: slot.orientation || 'horizontal' } : {}) } : slot)); selectedSlotId = newId; render();
+  setSlots(tile.id, slots(tile.id).map(slot => slot.id === selectedSlotId ? { ...slot, id: newId, type: event.target.value, requiresDoor: event.target.value === 'door' ? slot.requiresDoor : undefined, ...(event.target.value === 'door' ? { orientation: slot.orientation || 'horizontal' } : {}) } : slot)); selectedSlotId = newId; render();
 });
 document.querySelector('#slot-orientation').addEventListener('change', event => {
   const current = slots(selectedTileId).find(slot => slot.id === selectedSlotId); if (!current) return;
   const point = snapSlotPosition(current, current.type, event.target.value);
   updateSelectedSlot({ orientation: event.target.value, ...point });
 });
+document.querySelector('#slot-required-door').addEventListener('change', event => updateSelectedSlot({ requiresDoor: event.target.checked || undefined }));
 document.querySelector('#slot-x').addEventListener('change', event => updateSelectedSlot({ x: clamp(Number(event.target.value) / 100, 0, 1) }));
 document.querySelector('#slot-y').addEventListener('change', event => updateSelectedSlot({ y: clamp(Number(event.target.value) / 100, 0, 1) }));
 document.querySelector('#delete-catalog-slot').addEventListener('click', () => { if (!selectedSlotId) return; setSlots(selectedTileId, slots(selectedTileId).filter(slot => slot.id !== selectedSlotId)); selectedSlotId = null; render(); toast('Slot supprimé.'); });
 document.querySelector('#clear-tile-slots').addEventListener('click', () => { const tile = tileById(selectedSlotId); if (!tile || !slots(tile.id).length) return; if (!confirm(`Effacer tous les slots de ${tile.code} ?`)) return; setSlots(tile.id, []); selectedSlotId = null; render(); toast('Slots effacés.'); });
 
-if (window.location.hostname === 'localhost' || window.location.hostname === '[IP_ADDRESS]') {
-  document.querySelector('#catalog-save-project').addEventListener('click', saveProjectCatalog);
+const saveProjectButton = document.querySelector('#catalog-save-project');
+if (saveProjectButton && canSaveProjectCatalog()) {
+  saveProjectButton.addEventListener('click', saveProjectCatalog);
 } else {
-  document.querySelector('#catalog-save-project').style.display = 'none';
+  saveProjectButton?.style.setProperty('display', 'none');
 }
 
 document.querySelector('#catalog-file-link').addEventListener('click', linkPersonalFile);
@@ -336,4 +341,5 @@ document.addEventListener('keydown', event => {
     document.querySelector('#delete-catalog-slot').click();
   }
 });
+renderSlotTypeOptions();
 initialize();

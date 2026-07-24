@@ -1,33 +1,7 @@
-const PRODUCTS = [
-  { id: 'black-plague', name: 'Black Plague' },
-  { id: 'wulfsburg', name: 'Wulfsburg' },
-  { id: 'green-horde', name: 'Green Horde' },
-  { id: 'friends-and-foes', name: 'Friends and Foes' },
-  { id: 'white-death', name: 'White Death' },
-  { id: 'eternal-empire', name: 'Eternal Empire' },
-  { id: 'tmnt-timecrash', name: 'TMNT Timecrash' },
-  { id: 'custom', name: 'Tuiles importées' }
-];
+import { ZOMBICIDE_TOKENS } from './token.js';
+import { DOOR_CONNECTION_TOLERANCE, DOOR_EDGE_MARGIN, MAX_INTERIOR_OPEN_CELLS, PRODUCTS, TILE_SIZE, createBaseCatalog, productName } from './data.js';
 
-const TILE_PRODUCT_RANGES = [
-  { from: 1, to: 9, product: 'black-plague' },
-  { from: 10, to: 11, product: 'wulfsburg' },
-  { from: 12, to: 20, product: 'green-horde' },
-  { from: 21, to: 25, product: 'friends-and-foes' },
-  { from: 26, to: 34, product: 'white-death' },
-  { from: 35, to: 38, product: 'eternal-empire' },
-  { from: 39, to: 42, product: 'tmnt-timecrash' }
-];
-const BASE_CATALOG = TILE_PRODUCT_RANGES.flatMap(range => Array.from({ length: range.to - range.from + 1 }, (_, offset) => range.from + offset).flatMap(number => ['R', 'V'].map(face => ({ number, face, product: range.product })))).map((entry, index) => ({
-  id: `${entry.number}${entry.face}`.toLowerCase(), code: `${entry.number}${entry.face}`, name: `Tuile ${entry.number}${entry.face}`, product: entry.product, face: entry.face,
-  image: `assets/tiles/${entry.number}${entry.face}.webp`,
-  source: 'https://zombicide.fandom.com/wiki/Fantasy_Tiles',
-  doorAnchors: []
-}));
-
-const TILE_SIZE = 240;
-const DOOR_EDGE_MARGIN = .08;
-const DOOR_CONNECTION_TOLERANCE = .06;
+const BASE_CATALOG = createBaseCatalog();
 const {
   MARKERS,
   MARKER_CATEGORIES,
@@ -35,7 +9,7 @@ const {
   EDGE_DEFAULT_MARKERS,
   EDGE_ANCHOR_MARKERS,
   CELL_CENTER_MARKERS
-} = window.ZOMBICIDE_TOKENS;
+} = ZOMBICIDE_TOKENS;
 const storage = {
   get(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } },
   set(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
@@ -61,7 +35,6 @@ function newMission() {
 }
 function profile() { return profiles[activeProfile]; }
 function uid(prefix) { return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`; }
-function productName(id) { return id ? (PRODUCTS.find(product => product.id === id)?.name || 'Boîte inconnue') : 'Base'; }
 function catalogTile(id) { return catalog.find(tile => tile.id === id); }
 function placedTile(id) { return mission.tiles.find(tile => tile.instanceId === id); }
 function physicalTileKey(tileOrId) {
@@ -83,6 +56,15 @@ function duplicatePhysicalTiles(tiles) {
 function markerType(type) { return MARKERS.find(marker => marker.type === type); }
 function markerCategoryName(id) { return MARKER_CATEGORIES.find(category => category.id === id)?.label || id; }
 function markerOriginName(marker) { return marker?.product ? productName(marker.product) : marker?.category === 'custom' ? 'Custom' : 'Base'; }
+function markerLimit(markerOrType) {
+  const marker = typeof markerOrType === 'string' ? markerType(markerOrType) : markerOrType;
+  return Number.isInteger(marker?.limit) && marker.limit >= 0 ? marker.limit : null;
+}
+function markerCount(type) { return mission.markers.filter(marker => marker.type === type).length; }
+function markerLimitReached(type) {
+  const limit = markerLimit(type);
+  return limit !== null && markerCount(type) >= limit;
+}
 function markerAvailable(markerOrType) {
   const marker = typeof markerOrType === 'string' ? markerType(markerOrType) : markerOrType;
   if (!marker) return false;
@@ -210,6 +192,34 @@ function duplicateDoorConnections() {
   }
   return duplicates;
 }
+function missingRequiredDoors() {
+  return mission.tiles.flatMap(tile =>
+    tileAnchors(tile)
+      .filter(anchor => anchor.requiresDoor)
+      .filter(anchor => !doorMarkerAtConnection(tile, anchor))
+      .map(anchor => ({ tile, anchor }))
+  );
+}
+function missingInteriorSeparators() {
+  return mission.tiles.flatMap(tile => {
+    const configuration = catalogConfiguration(tile.catalogId);
+    return (configuration.interiorZones || [])
+      .map(zone => ({
+        zone: {
+          ...zone,
+          cellCount: Number.isInteger(zone.cellCount) ? zone.cellCount : Array.isArray(zone.cells) ? zone.cells.length : 0,
+          maxOpenCells: Number.isInteger(zone.maxOpenCells) ? zone.maxOpenCells : MAX_INTERIOR_OPEN_CELLS,
+          separatorDoorIds: Array.isArray(zone.separatorDoorIds) ? zone.separatorDoorIds : []
+        }
+      }))
+      .filter(({ zone }) => zone.cellCount > zone.maxOpenCells)
+      .filter(({ zone }) => !zone.separatorDoorIds.some(id => {
+        const anchor = tileAnchors(tile).find(entry => entry.id === id);
+        return anchor && doorMarkerAtConnection(tile, anchor);
+      }))
+      .map(({ zone }) => ({ tile, zone }));
+  });
+}
 function markerBoardPoint(marker) {
   const tile = placedTile(marker.tile); if (!tile) return null;
   const connection = markerDoorConnection(marker);
@@ -271,8 +281,13 @@ function item() {
   return selected.kind === 'tile' ? placedTile(selected.id) : mission.markers.find(marker => marker.id === selected.id);
 }
 function assetUrl(source) { try { return new URL(source, document.baseURI).href; } catch { return source || ''; } }
+function markerBackground(markerOrType) {
+  const marker = typeof markerOrType === 'string' ? markerType(markerOrType) : markerOrType;
+  if (Array.isArray(marker?.colors) && marker.colors.length > 1) return `linear-gradient(135deg, ${marker.colors[0]} 0 50%, ${marker.colors[1]} 50% 100%)`;
+  return marker?.color || '#555';
+}
 function markerHtml(type, label, extraClass = '') {
-  return `<span class="marker-swatch marker-${type} type-${type} ${extraClass}"><span>${esc(label)}</span></span>`;
+  return `<span class="marker-swatch marker-${type} type-${type} ${extraClass}" style="background:${esc(markerBackground(type))}"><span>${esc(label)}</span></span>`;
 }
 
 function render() {
@@ -341,7 +356,11 @@ function renderMarkerLibrary() {
     if (!markers.length) return '';
     const title = categoryId === 'base' ? 'Base' : 'Custom';
     return `<section class="marker-product-group"><div class="marker-product-title"><strong>${esc(title)}</strong><span>${markers.length} token${markers.length > 1 ? 's' : ''}</span></div><div class="marker-group"><div class="marker-group-title"><strong>${esc(markerCategoryName(categoryId))}</strong><span>${markers.length}</span></div><div class="marker-group-grid">${
-      markers.map(marker => `<button class="marker-choice" data-marker-type="${marker.type}" title="Disponible dans toutes les collections">${markerHtml(marker.type, marker.label)}<span>${esc(marker.name)}</span><small>${esc(markerCategoryName(marker.category))}</small></button>`).join('')
+      markers.map(marker => {
+        const limit = markerLimit(marker);
+        const reached = markerLimitReached(marker.type);
+        return `<button class="marker-choice ${reached ? 'unavailable' : ''}" data-marker-type="${marker.type}" ${reached ? 'disabled' : ''} title="${reached ? `Limite atteinte (${limit})` : 'Disponible dans toutes les collections'}">${markerHtml(marker.type, marker.label)}<span>${esc(marker.name)}</span><small>${esc(markerCategoryName(marker.category))}${limit !== null ? ` · ${markerCount(marker.type)}/${limit}` : ''}</small></button>`;
+      }).join('')
     }</div></div></section>`;
   }).join('');
   const productSections = PRODUCTS.map(product => {
@@ -355,7 +374,10 @@ function renderMarkerLibrary() {
         return `<div class="marker-group"><div class="marker-group-title"><strong>${esc(category.label)}</strong><span>${markers.length}</span></div><div class="marker-group-grid">${
           markers.map(marker => {
             const markerIsAvailable = markerAvailable(marker);
-            return `<button class="marker-choice ${markerIsAvailable ? '' : 'unavailable'}" data-marker-type="${marker.type}" ${markerIsAvailable ? '' : 'disabled'} title="${markerIsAvailable ? esc(product.name) : `${esc(product.name)} non sélectionnée`}">${markerHtml(marker.type, marker.label)}<span>${esc(marker.name)}</span><small>${esc(category.label)}</small></button>`;
+            const limit = markerLimit(marker);
+            const reached = markerLimitReached(marker.type);
+            const enabled = markerIsAvailable && !reached;
+            return `<button class="marker-choice ${enabled ? '' : 'unavailable'}" data-marker-type="${marker.type}" ${enabled ? '' : 'disabled'} title="${!markerIsAvailable ? `${esc(product.name)} non sélectionnée` : reached ? `Limite atteinte (${limit})` : esc(product.name)}">${markerHtml(marker.type, marker.label)}<span>${esc(marker.name)}</span><small>${esc(category.label)}${limit !== null ? ` · ${markerCount(marker.type)}/${limit}` : ''}</small></button>`;
           }).join('')
         }</div></div>`;
       }).join('')
@@ -393,6 +415,7 @@ function renderBoard() {
     const node = document.createElement('div');
     node.className = `marker-node marker-${marker.type} type-${marker.type} ${markerAvailable(marker.type) ? '' : 'unavailable'} ${selected?.kind === 'marker' && selected.id === marker.id ? 'selected' : ''}`;
     node.dataset.markerId = marker.id; node.style.left = `${point.x * TILE_SIZE}px`; node.style.top = `${point.y * TILE_SIZE}px`;
+    node.style.background = markerBackground(marker.type);
     node.innerHTML = `<span>${esc(marker.label)}</span>`; board.append(node);
   });
 }
@@ -445,18 +468,28 @@ function renderInspector() {
 }
 function renderLegend() {
   const counts = mission.markers.reduce((result, marker) => { result[marker.type] = (result[marker.type] || 0) + 1; return result; }, {});
-  document.querySelector('#legend').innerHTML = Object.entries(counts).map(([type, count]) => { const meta = markerType(type); return `<div class="legend-row">${markerHtml(type, meta?.label || '?')}<span>${esc(meta?.name || type)}</span><span>× ${count}</span></div>`; }).join('') || '<span class="legend-empty">La légende apparaîtra avec vos marqueurs.</span>';
+  document.querySelector('#legend').innerHTML = Object.entries(counts).map(([type, count]) => { const meta = markerType(type); const limit = markerLimit(meta); return `<div class="legend-row">${markerHtml(type, meta?.label || '?')}<span>${esc(meta?.name || type)}</span><span>${limit === null ? `× ${count}` : `${count}/${limit}`}</span></div>`; }).join('') || '<span class="legend-empty">La légende apparaîtra avec vos marqueurs.</span>';
 }
 function renderWarnings() {
   const issues = mission.tiles.filter(tile => !availability(tile.catalogId).available);
   const markerIssues = mission.markers.filter(marker => !markerAvailable(marker.type));
+  const markerCounts = mission.markers.reduce((result, marker) => { result[marker.type] = (result[marker.type] || 0) + 1; return result; }, {});
+  const markerLimitIssues = Object.entries(markerCounts).filter(([type, count]) => {
+    const limit = markerLimit(type);
+    return limit !== null && count > limit;
+  });
   const duplicates = duplicatePhysicalTiles(mission.tiles);
   const duplicateDoors = duplicateDoorConnections();
+  const requiredDoors = missingRequiredDoors();
+  const interiorSeparators = missingInteriorSeparators();
   const messages = [];
   if (issues.length) messages.push(`<strong>${issues.length} tuile${issues.length > 1 ? 's' : ''} indisponible${issues.length > 1 ? 's' : ''}</strong> dans « ${esc(profile().name)} » : ${issues.map(tile => esc(catalogTile(tile.catalogId)?.code || tile.catalogId)).join(', ')}.`);
   if (markerIssues.length) messages.push(`<strong>${markerIssues.length} marqueur${markerIssues.length > 1 ? 's' : ''} indisponible${markerIssues.length > 1 ? 's' : ''}</strong> dans « ${esc(profile().name)} » : ${markerIssues.map(marker => esc(markerType(marker.type)?.name || marker.type)).join(', ')}.`);
+  if (markerLimitIssues.length) messages.push(`<strong>Limite de tokens dépassée</strong> : ${markerLimitIssues.map(([type, count]) => `${esc(markerType(type)?.name || type)} ${count}/${markerLimit(type)}`).join(', ')}.`);
   if (duplicates.length) messages.push(`<strong>Doublon interdit</strong> : ${duplicates.map(([first, second]) => `${esc(catalogTile(first.catalogId)?.code || first.code)} / ${esc(catalogTile(second.catalogId)?.code || second.code)}`).join(', ')}. Les faces R et V comptent comme la même tuile.`);
   if (duplicateDoors.length) messages.push(`<strong>Connexion de porte en double</strong> : deux marqueurs utilisent la même jonction entre tuiles.`);
+  if (requiredDoors.length) messages.push(`<strong>Porte obligatoire manquante</strong> : ${requiredDoors.map(({ tile, anchor }) => `${esc(catalogTile(tile.catalogId)?.code || tile.code)} ${esc(anchor.id)}`).join(', ')}.`);
+  if (interiorSeparators.length) messages.push(`<strong>Intérieur trop grand</strong> : ${interiorSeparators.map(({ tile, zone }) => `${esc(catalogTile(tile.catalogId)?.code || tile.code)} ${esc(zone.label || zone.id)}`).join(', ')} doit être séparé par une porte.`);
   const bar = document.querySelector('#warning-bar'); bar.hidden = messages.length === 0;
   bar.innerHTML = messages.length ? `⚠ ${messages.join(' ')}` : '';
 }
@@ -516,6 +549,7 @@ function addMarker(type) {
   const meta = markerType(type);
   if (!meta) return toast('Type de marqueur inconnu.', true);
   if (!markerAvailable(meta)) return toast(`${meta.name} nécessite ${productName(meta.product)} dans la collection.`, true);
+  if (markerLimitReached(type)) return toast(`Limite atteinte pour ${meta.name} (${markerLimit(type)}).`, true);
   let tile = selected?.kind === 'tile' ? item() : mission.tiles[0]; if (!tile) return toast('Placez d’abord une tuile sur la grille.', true);
   if (type === 'invasion' && tile.column > 0 && tile.column < mission.grid.columns - 1 && tile.row > 0 && tile.row < mission.grid.rows - 1) {
     tile = mission.tiles.find(entry => entry.column === 0 || entry.column === mission.grid.columns - 1 || entry.row === 0 || entry.row === mission.grid.rows - 1) || tile;
@@ -604,16 +638,24 @@ async function embedTileImages(svg) {
   return svg;
 }
 function safeName(name) { return (name || 'mission').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase(); }
+function svgId(value) { return String(value ?? '').replace(/[^a-z0-9_-]/gi, '-'); }
+function svgMarkerShape(type, id, x, y, size, radius) {
+  const marker = markerType(type);
+  const colors = Array.isArray(marker?.colors) && marker.colors.length > 1 ? marker.colors : [marker?.color || '#555'];
+  const left = x - size / 2; const top = y - size / 2;
+  if (colors.length === 1) return `<rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}" fill="${xml(colors[0])}" stroke="#fff" stroke-width="3"/>`;
+  const clipId = `clip-${svgId(id)}-${Math.round(x * 100)}-${Math.round(y * 100)}`;
+  return `<clipPath id="${clipId}"><rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}"/></clipPath><g clip-path="url(#${clipId})"><rect x="${left}" y="${top}" width="${size / 2}" height="${size}" fill="${xml(colors[0])}"/><rect x="${x}" y="${top}" width="${size / 2}" height="${size}" fill="${xml(colors[1])}"/></g><rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}" fill="none" stroke="#fff" stroke-width="3"/>`;
+}
 function missionSvg() {
   const width = mission.grid.columns * TILE_SIZE; const boardHeight = mission.grid.rows * TILE_SIZE; const legendWidth = mission.render.showLegend && mission.markers.length ? 190 : 0; const height = boardHeight + 54;
   const tiles = mission.tiles.map(tile => {
     const data = catalogTile(tile.catalogId) || { code: tile.code || '?', name: 'Tuile inconnue' }; const x = tile.column * TILE_SIZE; const y = tile.row * TILE_SIZE; const art = data.image ? `<image href="${xml(data.image)}" width="${TILE_SIZE}" height="${TILE_SIZE}" preserveAspectRatio="none"/>` : `<rect width="${TILE_SIZE}" height="${TILE_SIZE}" fill="#756e59"/><path d="M0 0H240V48H0zM0 120H240V174H0z" fill="#b8aa84" opacity=".72"/><path d="M0 48H240V120H0zM0 174H240V240H0z" fill="#303733" opacity=".9"/><path d="M0 0L240 240M240 0L0 240" stroke="#000" opacity=".12" stroke-width="3"/>`;
     return `<g transform="translate(${x} ${y})"><g transform="rotate(${tile.rotation} 120 120)">${art}<rect width="240" height="240" fill="none" stroke="#111" stroke-width="5"/></g>${mission.render.showTileNames ? `<rect x="8" y="8" width="42" height="25" rx="3" fill="#111" stroke="#fff"/><text x="29" y="26" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">${xml(data.code)}</text>` : ''}</g>`;
   }).join('');
-  const colors = { start: '#2d6eb6', objective: '#bd343b', invasion: '#a62d32', exit: '#318053', door: '#666c72', spawn: '#7f3f98', npc: '#7f3f98', vault: '#a77b27', crypt: '#4d4568', noise: '#217d86', gate: '#a77b27', rubble: '#b87416', guard: '#24798a', statue: '#727981', chi: '#55a6b4' };
   const displayPoints = markerDisplayPoints();
-  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerBoardPoint(marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate', 'crypt'].includes(marker.type); const size = marker.type === 'door' ? 27 : 35; const rotation = marker.type === 'door' ? ` transform="rotate(45 ${x} ${y})"` : ''; const textRotation = marker.type === 'door' ? ` transform="rotate(-45 ${x} ${y})"` : ''; return `<g${rotation}><rect x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" rx="${square ? 3 : size / 2}" fill="${colors[marker.type] || '#555'}" stroke="#fff" stroke-width="3"/><text x="${x}" y="${y + 5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold"${textRotation}>${xml(marker.label)}</text></g>`; }).join('');
-  const counts = mission.markers.reduce((out, marker) => { out[marker.type] = (out[marker.type] || 0) + 1; return out; }, {}); const legend = legendWidth ? `<g transform="translate(${width + 18} 26)"><text fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">LÉGENDE</text>${Object.entries(counts).map(([type, count], index) => { const symbol = mission.markers.find(marker => marker.type === type)?.label || markerType(type)?.label || '?'; const centerY = 30 + index * 28; return `<circle cx="10" cy="${centerY}" r="9" fill="${colors[type] || '#555'}" stroke="#fff"/><text x="10" y="${centerY + 3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">${xml(symbol)}</text><text x="28" y="${centerY + 4}" fill="#eee" font-size="11">${xml(markerType(type)?.name || type)} × ${count}</text>`; }).join('')}</g>` : '';
+  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerBoardPoint(marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate', 'crypt', 'crypt-yellow'].includes(marker.type); const size = marker.type === 'door' ? 27 : 35; const rotation = marker.type === 'door' ? ` transform="rotate(45 ${x} ${y})"` : ''; const textRotation = marker.type === 'door' ? ` transform="rotate(-45 ${x} ${y})"` : ''; return `<g${rotation}>${svgMarkerShape(marker.type, marker.id, x, y, size, square ? 3 : size / 2)}<text x="${x}" y="${y + 5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold"${textRotation}>${xml(marker.label)}</text></g>`; }).join('');
+  const counts = mission.markers.reduce((out, marker) => { out[marker.type] = (out[marker.type] || 0) + 1; return out; }, {}); const legend = legendWidth ? `<g transform="translate(${width + 18} 26)"><text fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">LÉGENDE</text>${Object.entries(counts).map(([type, count], index) => { const symbol = mission.markers.find(marker => marker.type === type)?.label || markerType(type)?.label || '?'; const centerY = 30 + index * 28; const meta = markerType(type); const limit = markerLimit(meta); return `${svgMarkerShape(type, `legend-${type}-${index}`, 10, centerY, 18, 9)}<text x="10" y="${centerY + 3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">${xml(symbol)}</text><text x="28" y="${centerY + 4}" fill="#eee" font-size="11">${xml(meta?.name || type)} ${limit === null ? `× ${count}` : `${count}/${limit}`}</text>`; }).join('')}</g>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width + legendWidth}" height="${height}" viewBox="0 0 ${width + legendWidth} ${height}"><rect width="100%" height="100%" fill="#15181c"/><text x="14" y="35" fill="#f0c765" font-family="Georgia,serif" font-size="20" font-weight="bold">${xml(mission.name)}</text><g transform="translate(0 54)">${tiles}${markers}</g>${legend}</svg>`;
 }
 

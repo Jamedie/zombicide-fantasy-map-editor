@@ -141,6 +141,27 @@
     line-height: 1
 }
 
+.catalog-slot.slot-door.required-door {
+    outline: 3px solid #e64b3f;
+    outline-offset: 3px
+}
+
+.catalog-slot.slot-door.required-door::after {
+    content: "!";
+    position: absolute;
+    right: -9px;
+    top: -9px;
+    display: grid;
+    place-items: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #e64b3f;
+    color: #fff;
+    font-size: 10px;
+    line-height: 1
+}
+
 .catalog-slot.vertical.slot-door {
     transform: translate(-50%, -50%) rotate(90deg)
 }
@@ -183,6 +204,12 @@
 .catalog-slot.slot-crypt {
     border-radius: 4px;
     background: #4d4568
+}
+
+.catalog-slot.slot-crypt-yellow {
+    border-radius: 4px;
+    background: #d7b33f;
+    color: #221b08
 }
 
 .catalog-slot.slot-spawn {
