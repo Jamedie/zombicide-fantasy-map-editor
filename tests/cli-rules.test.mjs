@@ -52,6 +52,7 @@ try {
   assert.equal(contextResult.status, 0);
   const context = JSON.parse(contextResult.stdout);
   assert.ok(context.constraints.semanticAudit.tileJunctions);
+  assert.ok(context.constraints.semanticAudit.invasions.includes('shortest route'));
   assert.ok(context.constraints.interiorZoneSize);
   assert.ok(context.requiredAgentWorkflow.some(step => step.includes('semantic')));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'start' && marker.product === null && marker.category === 'base'));

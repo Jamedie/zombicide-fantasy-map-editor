@@ -165,7 +165,14 @@ Le plan doit être traité comme un graphe :
 
 - Une Invasion standard doit appartenir à une Zone touchant un bord extérieur réel du plateau.
 - Une jonction entre deux tuiles n’est jamais un bord extérieur.
-- Une Invasion doit être placée dans une Zone ouverte reliée au réseau jouable, jamais dans un bâtiment fermé sans règle spéciale.
+- Une Zone d’Invasion active doit toujours disposer d’au moins un chemin ouvert vers le reste du plateau.
+- Pendant la Préparation, chaque Zone d’Invasion active doit être vérifiée.
+- Si toutes ses sorties vers le réseau jouable sont bloquées uniquement par des portes ordinaires, ouvrir la première porte située sur le chemin ouvert le plus court vers la Zone de départ des Survivants.
+- Cette ouverture de Préparation ne produit aucun Bruit et ne provoque aucune génération de Zombies dans le bâtiment.
+- Lorsqu’une Zone d’Invasion inactive est activée en cours de partie, effectuer immédiatement la même vérification avant d’y générer des Zombies.
+- Une porte verrouillée, scellée, spéciale ou nommée par le scénario ne peut jamais être ouverte par cette règle. Si elle constitue l’unique sortie, déplacer plutôt le marqueur d’Invasion dans la Zone de rue ouverte la plus proche.
+- Cette règle corrige uniquement un placement d’Invasion enfermé. Elle n’ouvre aucune autre porte et ne modifie pas les objectifs de la quête.
+- Une Invasion doit être placée dans une Zone ouverte reliée au réseau jouable après cette correction, jamais dans un bâtiment fermé sans règle spéciale.
 - Une Invasion intérieure exige une règle explicite de portail, conduit ou événement et ne doit pas être traitée comme une Invasion standard.
 - Une Invasion activée plus tard doit être valide au moment exact de son activation.
 
@@ -206,10 +213,11 @@ Le plan doit être traité comme un graphe :
 5. Construire le graphe des Zones et identifier sa composante principale.
 6. Placer le départ, les objectifs et la sortie, puis vérifier leur parcours.
 7. Placer les Invasions sur le périmètre extérieur et contrôler les routes des Zombies et Nécromanciens.
-8. Placer les portes et vérifier les verrouillages ainsi que leur nombre.
-9. Ajouter les éléments spéciaux et leurs règles.
-10. Exécuter `validate --strict`.
-11. Produire l’image uniquement après réussite de la CLI et de l’audit logique.
+8. Pour chaque Invasion, appliquer la vérification de Préparation : chemin ouvert vers le plateau, ou ouverture de la première porte ordinaire la plus courte vers le départ, ou déplacement si seule une porte verrouillée, scellée, spéciale ou nommée par le scénario bloque la sortie.
+9. Placer les portes et vérifier les verrouillages ainsi que leur nombre.
+10. Ajouter les éléments spéciaux et leurs règles.
+11. Exécuter `validate --strict`.
+12. Produire l’image uniquement après réussite de la CLI et de l’audit logique.
 
 ## Checklist logique avant rendu
 
