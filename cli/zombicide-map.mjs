@@ -300,16 +300,48 @@ function printValidation(result, asJson) {
   for (const issue of result.errors) console.log(`  ERREUR [${issue.code}]${issue.path ? ` ${issue.path}` : ''} : ${issue.message}`);
   for (const issue of result.warnings) console.log(`  AVERTISSEMENT [${issue.code}]${issue.path ? ` ${issue.path}` : ''} : ${issue.message}`);
 }
+function wrapSvgText(text, maxLength = 32) {
+  const words = String(text ?? '').split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && next.length > maxLength) { lines.push(line); line = word; }
+    else line = next;
+  }
+  if (line) lines.push(line);
+  return lines.length ? lines : [''];
+}
+function secondaryObjectivesSvg(mission, x, y) {
+  const objectives = Array.isArray(mission.secondaryObjectives) ? mission.secondaryObjectives : [];
+  if (!objectives.length) return { svg: '', height: 0 };
+  let cursor = y + 20;
+  const entries = objectives.map((objective, index) => {
+    const title = objective.title || objective.name || `Objectif secondaire ${index + 1}`;
+    const condition = objective.condition ? wrapSvgText(objective.condition) : [];
+    const reward = objective.reward ? wrapSvgText(`Récompense : ${objective.reward}`) : [];
+    const lines = [...condition, ...reward];
+    const header = `<text x="${x}" y="${cursor}" fill="#d0a44a" font-size="10" font-weight="bold">${xml(title)}</text>`;
+    const body = lines.map((line, lineIndex) => `<text x="${x}" y="${cursor + 16 + lineIndex * 13}" fill="#eee" font-size="10">${xml(line)}</text>`).join('');
+    cursor += 22 + lines.length * 13;
+    return header + body;
+  }).join('');
+  return { svg: `<g><text x="${x}" y="${y}" fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">OBJECTIFS SECONDAIRES</text>${entries}</g>`, height: cursor - y };
+}
 function missionSvg(mission, validation) {
   const width = mission.grid.columns * TILE_SIZE; const boardHeight = mission.grid.rows * TILE_SIZE;
   const counts = mission.markers.reduce((out, marker) => { out[marker.type] = (out[marker.type] || 0) + 1; return out; }, {});
-  const legendWidth = mission.render?.showLegend !== false && mission.markers.length ? 190 : 0; const height = Math.max(boardHeight + 54, Object.keys(counts).length * 28 + 80);
+  const objectives = Array.isArray(mission.secondaryObjectives) ? mission.secondaryObjectives : [];
+  const sideWidth = mission.render?.showLegend !== false && (mission.markers.length || objectives.length) ? (objectives.length ? 280 : 190) : 0;
+  const legendHeight = Object.keys(counts).length * 28 + 80;
+  const secondary = sideWidth ? secondaryObjectivesSvg(mission, width + 18, 72 + legendHeight) : { svg: '', height: 0 };
+  const height = Math.max(boardHeight + 54, legendHeight + secondary.height + 40);
   const tiles = mission.tiles.map(tile => { const data = CATALOG.find(entry => entry.id === tile.catalogId) || { code: tile.code || '?' }; const x = tile.column * TILE_SIZE; const y = tile.row * TILE_SIZE; const image = data.image && imageDataUri(data.image); const art = image ? `<image href="${image}" width="240" height="240" preserveAspectRatio="none"/>` : `<rect width="240" height="240" fill="#756e59"/><path d="M0 0H240V48H0zM0 120H240V174H0z" fill="#b8aa84" opacity=".72"/><path d="M0 48H240V120H0zM0 174H240V240H0z" fill="#303733" opacity=".9"/><path d="M0 0L240 240M240 0L0 240" stroke="#000" opacity=".12" stroke-width="3"/>`; return `<g transform="translate(${x} ${y})"><g transform="rotate(${tile.rotation} 120 120)">${art}<rect width="240" height="240" fill="none" stroke="#111" stroke-width="5"/></g>${mission.render?.showTileNames !== false ? `<rect x="8" y="8" width="42" height="25" rx="3" fill="#111" stroke="#fff"/><text x="29" y="26" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">${xml(data.code)}</text>` : ''}</g>`; }).join('');
   const displayPoints = markerDisplayPoints(mission);
   const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerRenderPoint(mission, marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate', 'crypt', 'crypt-yellow'].includes(marker.type); const size = marker.type === 'door' ? 27 : 35; const rotate = marker.type === 'door' ? ` transform="rotate(45 ${x} ${y})"` : ''; const unrotate = marker.type === 'door' ? ` transform="rotate(-45 ${x} ${y})"` : ''; return `<g${rotate}>${svgMarkerShape(marker.type, marker.id, x, y, size, square ? 3 : size / 2)}<text x="${x}" y="${y + 5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold"${unrotate}>${xml(marker.label)}</text></g>`; }).join('');
-  const legend = legendWidth ? `<g transform="translate(${width + 18} 72)"><text fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">LÉGENDE</text>${Object.entries(counts).map(([type, count], index) => { const symbol = mission.markers.find(marker => marker.type === type)?.label || MARKERS[type]?.[1] || '?'; const centerY = 30 + index * 28; const limit = markerLimit(type); return `${svgMarkerShape(type, `legend-${type}-${index}`, 10, centerY, 18, 9)}<text x="10" y="${centerY + 3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">${xml(symbol)}</text><text x="28" y="${centerY + 4}" fill="#eee" font-size="11">${xml(MARKERS[type]?.[0] || type)} ${limit === null ? `× ${count}` : `${count}/${limit}`}</text>`; }).join('')}</g>` : '';
+  const legend = sideWidth && mission.markers.length ? `<g transform="translate(${width + 18} 72)"><text fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">LÉGENDE</text>${Object.entries(counts).map(([type, count], index) => { const symbol = mission.markers.find(marker => marker.type === type)?.label || MARKERS[type]?.[1] || '?'; const centerY = 30 + index * 28; const limit = markerLimit(type); return `${svgMarkerShape(type, `legend-${type}-${index}`, 10, centerY, 18, 9)}<text x="10" y="${centerY + 3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">${xml(symbol)}</text><text x="28" y="${centerY + 4}" fill="#eee" font-size="11">${xml(MARKERS[type]?.[0] || type)} ${limit === null ? `× ${count}` : `${count}/${limit}`}</text>`; }).join('')}</g>` : '';
   const warning = validation.warnings.length ? `<text x="${width + 18}" y="48" fill="#e5b95d" font-size="9">⚠ ${validation.warnings.length} avertissement(s) collection</text>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width + legendWidth}" height="${height}" viewBox="0 0 ${width + legendWidth} ${height}"><rect width="100%" height="100%" fill="${xml(mission.render?.background || '#15181c')}"/><text x="14" y="35" fill="#f0c765" font-family="Georgia,serif" font-size="20" font-weight="bold">${xml(mission.name)}</text>${warning}<g transform="translate(0 54)">${tiles}${markers}</g>${legend}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width + sideWidth}" height="${height}" viewBox="0 0 ${width + sideWidth} ${height}"><rect width="100%" height="100%" fill="${xml(mission.render?.background || '#15181c')}"/><text x="14" y="35" fill="#f0c765" font-family="Georgia,serif" font-size="20" font-weight="bold">${xml(mission.name)}</text>${warning}<g transform="translate(0 54)">${tiles}${markers}</g>${legend}${secondary.svg}</svg>`;
 }
 function findEdge() {
   const candidates = process.platform === 'win32'
