@@ -351,7 +351,7 @@ function renderLibrary() {
     return `<article class="tile-card ${access.available ? '' : 'unavailable'}" draggable="${access.available}" data-catalog-id="${tile.id}" title="${esc(access.reason)}">
       ${tile.image ? `<img class="tile-preview" src="${esc(assetUrl(tile.image))}" alt="Aperçu ${esc(tile.code)}" loading="lazy" />` : '<div class="tile-preview"></div>'}
       <div class="tile-meta"><div class="tile-title"><span>${esc(tile.code)} · Face ${esc(tile.face)}</span><i class="availability-dot"></i></div><span class="tile-product">${esc(productName(tile.product))}</span></div>
-      <select class="tile-exception" data-exception="${tile.id}" aria-label="Exception ${esc(tile.code)}"><option value="auto" ${mode === 'auto' ? 'selected' : ''}>Selon ma collection</option><option value="whitelist" ${mode === 'whitelist' ? 'selected' : ''}>Forcer disponible</option><option value="blacklist" ${mode === 'blacklist' ? 'selected' : ''}>Forcer indisponible</option></select>
+      <select class="tile-exception" data-exception="${tile.id}" aria-label="Exception ${esc(tile.code)}"><option value="auto" ${mode === 'auto' ? 'selected' : ''}>Selon ma collection</option><option value="whitelist" ${mode === 'whitelist' ? 'selected' : ''}>Forcer disponible</option><option value="blacklist" ${mode === 'blacklist' ? 'selected' : ''}>Forcer indisponible</option>${tile.product === 'custom' ? '<option value="delete">Supprimer</option>' : ''}</select>
     </article>`;
   }).join('') || '<p class="legend-empty">Aucune tuile ne correspond à ces critères.</p>';
 }
@@ -542,6 +542,35 @@ function removeTile(instanceId) {
   mission.markers = mission.markers.filter(marker => marker.tile !== instanceId);
   if (selected?.id === instanceId) selected = null;
 }
+function deleteCustomTile(catalogId) {
+  const tile = catalogTile(catalogId);
+  if (!tile || tile.product !== 'custom') return renderLibrary();
+  const instances = mission.tiles.filter(entry => entry.catalogId === catalogId);
+  const suffix = instances.length
+    ? `\n\nElle sera aussi retirée du plateau avec ses marqueurs (${instances.length} exemplaire${instances.length > 1 ? 's' : ''}).`
+    : '';
+  if (!confirm(`Supprimer définitivement la tuile custom « ${tile.code} » du catalogue local ?${suffix}`)) return renderLibrary();
+
+  const instanceIds = new Set(instances.map(entry => entry.instanceId));
+  const markerIds = new Set(mission.markers.filter(marker => instanceIds.has(marker.tile)).map(marker => marker.id));
+  mission.tiles = mission.tiles.filter(entry => entry.catalogId !== catalogId);
+  mission.markers = mission.markers.filter(marker => !instanceIds.has(marker.tile));
+  if ((selected?.kind === 'tile' && instanceIds.has(selected.id)) || (selected?.kind === 'marker' && markerIds.has(selected.id))) selected = null;
+
+  const customIndex = customCatalog.findIndex(entry => entry.id === catalogId);
+  if (customIndex >= 0) customCatalog.splice(customIndex, 1);
+  const catalogIndex = catalog.findIndex(entry => entry.id === catalogId);
+  if (catalogIndex >= 0) catalog.splice(catalogIndex, 1);
+  for (const collectionProfile of profiles) {
+    collectionProfile.tileWhitelist = collectionProfile.tileWhitelist.filter(id => id !== catalogId);
+    collectionProfile.tileBlacklist = collectionProfile.tileBlacklist.filter(id => id !== catalogId);
+  }
+  delete catalogOverrides[catalogId];
+  delete defaultCatalogOverrides[catalogId];
+  storage.set('zombicide-custom-catalog', customCatalog);
+  render();
+  toast(`Tuile custom « ${tile.code} » supprimée.`);
+}
 function firstOpenMarkerPosition(tile, candidates) {
   const existing = mission.markers.filter(marker => marker.tile === tile.instanceId);
   return candidates.find(candidate => existing.every(marker => Math.hypot(marker.x - candidate.x, marker.y - candidate.y) >= .13))
@@ -724,6 +753,7 @@ document.querySelector('#tile-library').addEventListener('dragstart', event => {
 document.querySelector('#tile-library').addEventListener('click', event => { const card = event.target.closest('[data-catalog-id]'); if (card && !event.target.closest('select')) addTile(card.dataset.catalogId); });
 document.querySelector('#tile-library').addEventListener('change', event => {
   const id = event.target.dataset.exception; if (!id) return;
+  if (event.target.value === 'delete') return deleteCustomTile(id);
   profile().tileWhitelist = profile().tileWhitelist.filter(value => value !== id); profile().tileBlacklist = profile().tileBlacklist.filter(value => value !== id);
   if (event.target.value === 'whitelist') profile().tileWhitelist.push(id); if (event.target.value === 'blacklist') profile().tileBlacklist.push(id); render();
 });
