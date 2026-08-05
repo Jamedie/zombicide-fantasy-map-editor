@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { TOKEN_MARKERS } from '../app/scripts/token.js';
+import { CATALOG_PREFERRED_MARKERS, CELL_CENTER_MARKERS, EDGE_ANCHOR_MARKERS, INVASION_MARKERS, TOKEN_MARKERS } from '../app/scripts/token.js';
 import { DEFAULT_CATALOG_POLICY, MAX_INTERIOR_OPEN_CELLS, PRODUCT_NAMES, TILE_SIZE, createBaseCatalog } from '../app/scripts/data.js';
 
 const VERSION = '0.1.0';
@@ -46,7 +46,27 @@ function svgMarkerShape(type, id, x, y, size, radius) {
   const clipId = `clip-${svgId(id)}-${Math.round(x * 100)}-${Math.round(y * 100)}`;
   return `<clipPath id="${clipId}"><rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}"/></clipPath><g clip-path="url(#${clipId})"><rect x="${left}" y="${top}" width="${size / 2}" height="${size}" fill="${xml(colors[0])}"/><rect x="${x}" y="${top}" width="${size / 2}" height="${size}" fill="${xml(colors[1])}"/></g><rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}" fill="none" stroke="#fff" stroke-width="3"/>`;
 }
-function imageDataUri(file) { return fs.existsSync(file) ? `data:image/webp;base64,${fs.readFileSync(file).toString('base64')}` : null; }
+function imageDataUri(file) {
+  if (!fs.existsSync(file)) return null;
+  const mime = path.extname(file).toLowerCase() === '.png' ? 'image/png' : 'image/webp';
+  return `data:${mime};base64,${fs.readFileSync(file).toString('base64')}`;
+}
+function markerImageDataUri(type) {
+  const image = MARKER_DATA[type]?.image;
+  return image ? imageDataUri(path.resolve(CLI_DIR, '../app', image)) : null;
+}
+function svgMarkerContent(type, id, x, y, size, radius, label, fontSize = 12) {
+  const image = markerImageDataUri(type);
+  if (image) {
+    const marker = MARKER_DATA[type];
+    const [sourceWidth, sourceHeight] = marker?.imageSize || [1, 1];
+    const renderSize = marker?.renderSize || size;
+    const width = sourceWidth >= sourceHeight ? renderSize : renderSize * sourceWidth / sourceHeight;
+    const height = sourceWidth >= sourceHeight ? renderSize * sourceHeight / sourceWidth : renderSize;
+    return `<image href="${image}" x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet"/>`;
+  }
+  return `${svgMarkerShape(type, id, x, y, size, radius)}<text x="${x}" y="${y + fontSize * .4}" text-anchor="middle" fill="#fff" font-size="${fontSize}" font-weight="bold">${xml(label)}</text>`;
+}
 function collectionFrom(file) {
   if (!file) return null;
   const data = readJson(file, 'collection');
@@ -146,7 +166,7 @@ function validateMission(mission, collection) {
     }
     if (!instanceIds.has(marker.tile)) errors.push({ code: 'MARKER_TILE', path: where, message: `référence une instance de tuile inexistante (« ${marker.tile} »).` });
     if (!inUnit(marker.x) || !inUnit(marker.y)) errors.push({ code: 'MARKER_POSITION', path: where, message: 'x et y doivent être compris entre 0 et 1.' });
-    if (marker.type === 'invasion' && inUnit(marker.x) && inUnit(marker.y)) {
+    if (INVASION_MARKERS.has(marker.type) && inUnit(marker.x) && inUnit(marker.y)) {
       const tile = mission.tiles.find(entry => entry.instanceId === marker.tile);
       const edgeMargin = .18;
       const onOuterEdge = tile && (
@@ -211,7 +231,7 @@ function inUnit(value) { return typeof value === 'number' && Number.isFinite(val
 function rotatePoint(x, y, rotation) { if (rotation === 90) return { x: 1 - y, y: x }; if (rotation === 180) return { x: 1 - x, y: 1 - y }; if (rotation === 270) return { x: y, y: 1 - x }; return { x, y }; }
 function generatedMarkerAnchor(marker) {
   const gridEdge = String(marker.anchor || '').match(/^grid-edge-([hv])-([0-3])-([1-3])$/);
-  if (gridEdge && ['gate', 'rubble'].includes(marker.type)) {
+  if (gridEdge && CATALOG_PREFERRED_MARKERS.has(marker.type)) {
     const boundary = Number(gridEdge[2]); const cell = Number(gridEdge[3]);
     return gridEdge[1] === 'h'
       ? { id: marker.anchor, x: (cell - .5) / 3, y: boundary / 3, fixedToGrid: true }
@@ -221,14 +241,12 @@ function generatedMarkerAnchor(marker) {
   if (gridCell) {
     const row = Number(gridCell[1]); const column = Number(gridCell[2]);
     const perimeter = row === 1 || row === 3 || column === 1 || column === 3;
-    const edgeTypes = ['start', 'invasion', 'exit'];
-    const centerTypes = ['objective', 'spawn', 'npc', 'vault', 'crypt', 'crypt-yellow', 'noise', 'guard', 'statue', 'chi'];
-    if ((edgeTypes.includes(marker.type) && perimeter) || centerTypes.includes(marker.type)) {
+    if ((EDGE_ANCHOR_MARKERS.has(marker.type) && perimeter) || CELL_CENTER_MARKERS.has(marker.type)) {
       return { id: marker.anchor, x: (column - .5) / 3, y: (row - .5) / 3, fixedToGrid: true };
     }
   }
   const insetEdge = String(marker.anchor || '').match(/^grid-inset-(haut|droite|bas|gauche)-([1-3])$/);
-  if (insetEdge && ['start', 'invasion', 'exit', 'spawn'].includes(marker.type)) {
+  if (insetEdge && (EDGE_ANCHOR_MARKERS.has(marker.type) || marker.type === 'spawn')) {
     const center = (Number(insetEdge[2]) - .5) / 3; const inset = .11;
     const points = {
       haut: { x: center, y: inset },
@@ -338,8 +356,8 @@ function missionSvg(mission, validation) {
   const height = Math.max(boardHeight + 54, legendHeight + secondary.height + 40);
   const tiles = mission.tiles.map(tile => { const data = CATALOG.find(entry => entry.id === tile.catalogId) || { code: tile.code || '?' }; const x = tile.column * TILE_SIZE; const y = tile.row * TILE_SIZE; const image = data.image && imageDataUri(data.image); const art = image ? `<image href="${image}" width="240" height="240" preserveAspectRatio="none"/>` : `<rect width="240" height="240" fill="#756e59"/><path d="M0 0H240V48H0zM0 120H240V174H0z" fill="#b8aa84" opacity=".72"/><path d="M0 48H240V120H0zM0 174H240V240H0z" fill="#303733" opacity=".9"/><path d="M0 0L240 240M240 0L0 240" stroke="#000" opacity=".12" stroke-width="3"/>`; return `<g transform="translate(${x} ${y})"><g transform="rotate(${tile.rotation} 120 120)">${art}<rect width="240" height="240" fill="none" stroke="#111" stroke-width="5"/></g>${mission.render?.showTileNames !== false ? `<rect x="8" y="8" width="42" height="25" rx="3" fill="#111" stroke="#fff"/><text x="29" y="26" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">${xml(data.code)}</text>` : ''}</g>`; }).join('');
   const displayPoints = markerDisplayPoints(mission);
-  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerRenderPoint(mission, marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate', 'crypt', 'crypt-yellow'].includes(marker.type); const size = marker.type === 'door' ? 27 : 35; const rotate = marker.type === 'door' ? ` transform="rotate(45 ${x} ${y})"` : ''; const unrotate = marker.type === 'door' ? ` transform="rotate(-45 ${x} ${y})"` : ''; return `<g${rotate}>${svgMarkerShape(marker.type, marker.id, x, y, size, square ? 3 : size / 2)}<text x="${x}" y="${y + 5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold"${unrotate}>${xml(marker.label)}</text></g>`; }).join('');
-  const legend = sideWidth && mission.markers.length ? `<g transform="translate(${width + 18} 72)"><text fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">LÉGENDE</text>${Object.entries(counts).map(([type, count], index) => { const symbol = mission.markers.find(marker => marker.type === type)?.label || MARKERS[type]?.[1] || '?'; const centerY = 30 + index * 28; const limit = markerLimit(type); return `${svgMarkerShape(type, `legend-${type}-${index}`, 10, centerY, 18, 9)}<text x="10" y="${centerY + 3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">${xml(symbol)}</text><text x="28" y="${centerY + 4}" fill="#eee" font-size="11">${xml(MARKERS[type]?.[0] || type)} ${limit === null ? `× ${count}` : `${count}/${limit}`}</text>`; }).join('')}</g>` : '';
+  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerRenderPoint(mission, marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate', 'crypt', 'crypt-yellow'].includes(marker.type); const size = marker.type === 'door' ? 36 : 35; return `<g>${svgMarkerContent(marker.type, marker.id, x, y, size, square ? 3 : size / 2, marker.label)}</g>`; }).join('');
+  const legend = sideWidth && mission.markers.length ? `<g transform="translate(${width + 18} 72)"><text fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">LÉGENDE</text>${Object.entries(counts).map(([type, count], index) => { const symbol = mission.markers.find(marker => marker.type === type)?.label || MARKERS[type]?.[1] || '?'; const centerY = 30 + index * 28; const limit = markerLimit(type); return `${svgMarkerContent(type, `legend-${type}-${index}`, 10, centerY, 20, 9, symbol, 8)}<text x="28" y="${centerY + 4}" fill="#eee" font-size="11">${xml(MARKERS[type]?.[0] || type)} ${limit === null ? `× ${count}` : `${count}/${limit}`}</text>`; }).join('')}</g>` : '';
   const warning = validation.warnings.length ? `<text x="${width + 18}" y="48" fill="#e5b95d" font-size="9">⚠ ${validation.warnings.length} avertissement(s) collection</text>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width + sideWidth}" height="${height}" viewBox="0 0 ${width + sideWidth} ${height}"><rect width="100%" height="100%" fill="${xml(mission.render?.background || '#15181c')}"/><text x="14" y="35" fill="#f0c765" font-family="Georgia,serif" font-size="20" font-weight="bold">${xml(mission.name)}</text>${warning}<g transform="translate(0 54)">${tiles}${markers}</g>${legend}${secondary.svg}</svg>`;
 }
@@ -393,7 +411,7 @@ if (command === 'rules') {
   if (args.json) console.log(JSON.stringify(rows, null, 2)); else for (const tile of rows) console.log(`${tile.available ? '✓' : '×'} ${tile.code.padEnd(4)} ${tile.name.padEnd(25)} ${tile.reason}`);
 } else if (command === 'context') {
   const available = CATALOG.filter(tile => availability(tile, collection).available).map(tile => ({ id: tile.id, code: tile.code, face: tile.face, product: tile.product, slots: tile.slots, doorAnchors: tile.doorAnchors, interiorZones: tile.interiorZones || [] }));
-  const markerCatalog = Object.entries(MARKERS).map(([type, marker]) => ({ type, name: marker[0], label: marker[1], color: marker[2], colors: MARKER_DATA[type]?.colors || null, product: marker[3], productName: marker[3] ? PRODUCT_NAMES[marker[3]] : marker[4] === 'custom' ? 'Custom' : 'Base', category: marker[4], limit: markerLimit(type), ...markerAvailability(type, collection) }));
+  const markerCatalog = Object.entries(MARKERS).map(([type, marker]) => ({ type, name: marker[0], label: marker[1], color: marker[2], colors: MARKER_DATA[type]?.colors || null, image: MARKER_DATA[type]?.image || null, imageOpen: MARKER_DATA[type]?.imageOpen || null, imageSize: MARKER_DATA[type]?.imageSize || null, product: marker[3], productName: marker[3] ? PRODUCT_NAMES[marker[3]] : marker[4] === 'custom' ? 'Custom' : 'Base', category: marker[4], limit: markerLimit(type), ...markerAvailability(type, collection) }));
   const context = { tool: 'zombicide-map', version: VERSION, rulesDocument: RULES_FILE, requiredAgentWorkflow: ['Read docs/CLI_RULES.md or run `zombicide-map rules` before using the CLI.', 'Run `zombicide-map context --json` before generating or editing mission JSON.', 'Run `zombicide-map validate <mission.json> --strict` after every change.', 'Complete the semantic movement-network audit from docs/CLI_RULES.md; CLI success alone does not prove playability.', 'Render only after both CLI validation and semantic audit succeed.'], constraints: { grid: { columns: 'integer 1..4', rows: 'integer 1..4' }, rotations: [0, 90, 180, 270], uniquePhysicalTiles: 'a tile number can appear only once; R and V are the same physical tile', uniqueDoorConnections: 'paired door slots on opposite sides of the same tile junction represent one connection and accept only one anchored door marker', requiredDoorSlots: 'a catalog door slot marked requiresDoor=true must have a door marker on its logical connection; use this for open building-to-exterior doorways', interiorZoneSize: `a catalog interior zone with cellCount greater than ${MAX_INTERIOR_OPEN_CELLS} must have a door marker on one of its separatorDoorIds`, uniqueMarkerAnchorPerType: true, semanticAudit: { tileJunctions: 'every adjacent tile pair must expose compatible passages on both sides after rotation; a door marker cannot repair an incompatible junction', survivors: 'start -> ordered mandatory objectives -> exit must be reachable; keys and mechanisms must be reachable before the doors they open', invasions: 'standard invasions must touch a real outer board side; during setup or later activation, an active invasion must have an open route to the board, or open only the first ordinary door on the shortest route to the survivor start; locked, sealed, special, or scenario-named doors cannot be opened by this correction and require moving the invasion to the nearest open street zone', necromancers: 'each eligible invasion needs an open route to another valid invasion unless the quest explicitly overrides escape rules', zombies: 'every active invasion must connect to the survivor network after the invasion-route preparation correction; no permanently sealed component without an explicit scenario rule', doors: 'ordinary doors join adjacent zones; special-door mechanisms must be reachable from the start side', readability: 'markers must not hide doors, zone limits, or important passages' }, defaultMarkerPlacement: { door: 'prefer a catalog door slot; free placement is allowed', gate: 'prefer a catalog gate slot, otherwise a grid-edge anchor; free placement is allowed', rubble: 'prefer a catalog rubble slot, otherwise a grid-edge anchor; free placement is allowed', start: 'center of one of the eight perimeter cells of the tile 3x3 grid; free placement is allowed', invasion: 'center of a perimeter cell located on an outer board side; free placement must also stay on an outer side', exit: 'center of one of the eight perimeter cells of the tile 3x3 grid; free placement is allowed', objective: 'center of a tile grid cell by default; free placement is allowed', spawn: 'center of a tile grid cell by default; free placement is allowed', other: 'center of a tile grid cell by default; free placement is allowed', overlappingMarkers: 'logical coordinates stay unchanged; rendering spreads icons that share a point' }, normalizedMarkerCoordinates: true, generatedAnchors: { gridEdge: 'grid-edge-(h|v)-(0..3)-(1..3), for gate/rubble', gridCell: 'grid-cell-(row 1..3)-(column 1..3); perimeter cells only for start/invasion/exit, all cells for central markers', legacyInsetGridEdge: 'grid-inset-* remains accepted when reading older missions' }, slotPolicy: CATALOG_POLICY, markers: Object.keys(MARKERS), markerCatalog, availableTiles: available }, missionContract: { format: 'zombicide-map', version: 1, name: 'string', grid: { columns: 3, rows: 2 }, tiles: [{ instanceId: 'unique string', catalogId: 'available tile id; tile number unique across R/V faces', code: 'catalog code', face: 'R|V', column: 0, row: 0, rotation: 0, customDoorAnchors: [] }], markers: [{ id: 'unique string', type: 'one of constraints.markers', tile: 'tile instanceId', anchor: 'optional stable catalog or generated anchor id', x: 'derived from anchor when anchored, otherwise normalized coordinate 0..1', y: 'derived from anchor when anchored, otherwise normalized coordinate 0..1', label: 'string' }], render: { showTileNames: true, showLegend: true, background: '#24282d' } } };
   if (args.json) console.log(JSON.stringify(context, null, 2)); else { console.log('CONTEXTE ZOMBICIDE MAP POUR MODÈLE IA'); console.log(JSON.stringify(context, null, 2)); console.log('\nAprès génération : zombicide-map validate <mission.json> --collection <collection.json> --json'); }
 } else if (command === 'validate') {

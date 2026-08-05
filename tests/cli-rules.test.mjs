@@ -57,9 +57,22 @@ try {
   assert.ok(context.requiredAgentWorkflow.some(step => step.includes('semantic')));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'start' && marker.product === null && marker.category === 'base'));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'rubble' && marker.product === null && marker.category === 'custom'));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'npc' && marker.product === null && marker.category === 'custom'));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'vault' && marker.product === null && marker.category === 'custom'));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'crypt' && marker.product === 'black-plague' && marker.category === 'unique' && marker.limit === 2));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'crypt-yellow' && marker.product === 'black-plague' && marker.category === 'unique' && marker.limit === 2));
-  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'chi' && marker.product === 'eternal-empire' && marker.category === 'unique'));
+  assert.ok(!context.constraints.markerCatalog.some(marker => marker.type === 'chi'));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'barrier' && marker.product === 'green-horde' && marker.limit === 6 && marker.image));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'familiar-cat' && marker.product === 'friends-and-foes' && marker.image));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'ballista' && marker.product === 'no-rest-for-wicked' && marker.image));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'guard' && marker.product === 'white-death' && marker.limit === 12 && marker.image));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'white-death-corruption' && marker.product === 'white-death' && marker.limit === 15 && marker.image));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'invasion-white-death-1' && marker.product === 'white-death' && marker.limit === 1 && marker.image));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'statue' && marker.product === 'eternal-empire' && marker.limit === 3 && marker.image));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'invasion-eternal-empire-5' && marker.product === 'eternal-empire' && marker.limit === 1 && marker.image));
+  for (const removedType of ['first-player', 'magic-dome', 'dragon-fire', 'locator-1', 'locator-2', 'area-blue', 'area-red', 'extra-action']) {
+    assert.ok(!context.constraints.markerCatalog.some(marker => marker.type === removedType));
+  }
 
   const valid = validate('valid-generated-anchors', mission({
     markers: [
@@ -77,7 +90,7 @@ try {
 
   const unavailableMarker = validateStrictWithCollection('unavailable-marker', mission({
     markers: [
-      { id: 'chi-1', type: 'chi', tile: 'tile-1', anchor: 'grid-cell-2-2', x: .5, y: .5, label: 'χ' }
+      { id: 'statue-1', type: 'statue', tile: 'tile-1', anchor: 'grid-cell-2-2', x: .5, y: .5, label: 'ST' }
     ]
   }), {
     format: 'zombicide-collection',
@@ -89,6 +102,66 @@ try {
   });
   assert.equal(unavailableMarker.status, 2);
   assert.ok(unavailableMarker.output.warnings.some(warning => warning.code === 'UNAVAILABLE_MARKER'));
+
+  const unavailableExpansionMarker = validateStrictWithCollection('unavailable-expansion-marker', mission({
+    markers: [
+      { id: 'ballista-1', type: 'ballista', tile: 'tile-1', anchor: 'grid-cell-2-2', x: .5, y: .5, label: 'BA' }
+    ]
+  }), {
+    format: 'zombicide-collection',
+    version: 1,
+    name: 'Black Plague seulement',
+    ownedProducts: ['black-plague'],
+    tileWhitelist: [],
+    tileBlacklist: []
+  });
+  assert.equal(unavailableExpansionMarker.status, 2);
+  assert.ok(unavailableExpansionMarker.output.warnings.some(warning => warning.code === 'UNAVAILABLE_MARKER' && warning.message.includes('No Rest for the Wicked')));
+
+  const unavailableWhiteDeathMarker = validateStrictWithCollection('unavailable-white-death-marker', mission({
+    markers: [
+      { id: 'corruption-1', type: 'white-death-corruption', tile: 'tile-1', anchor: 'grid-cell-2-2', x: .5, y: .5, label: 'CO' }
+    ]
+  }), {
+    format: 'zombicide-collection',
+    version: 1,
+    name: 'Black Plague seulement',
+    ownedProducts: ['black-plague'],
+    tileWhitelist: [],
+    tileBlacklist: []
+  });
+  assert.equal(unavailableWhiteDeathMarker.status, 2);
+  assert.ok(unavailableWhiteDeathMarker.output.warnings.some(warning => warning.code === 'UNAVAILABLE_MARKER' && warning.message.includes('White Death')));
+
+  const availableEternalEmpireMarker = validateStrictWithCollection('available-eternal-empire-marker', mission({
+    markers: [
+      { id: 'statue-1', type: 'statue', tile: 'tile-1', anchor: 'grid-cell-2-2', x: .5, y: .5, label: 'ST' }
+    ]
+  }), {
+    format: 'zombicide-collection',
+    version: 1,
+    name: 'Black Plague et Eternal Empire',
+    ownedProducts: ['black-plague', 'eternal-empire'],
+    tileWhitelist: [],
+    tileBlacklist: []
+  });
+  assert.equal(availableEternalEmpireMarker.status, 0);
+  assert.equal(availableEternalEmpireMarker.output.valid, true);
+
+  const availableExpansionMarker = validateStrictWithCollection('available-expansion-marker', mission({
+    markers: [
+      { id: 'ballista-1', type: 'ballista', tile: 'tile-1', anchor: 'grid-cell-2-2', x: .5, y: .5, label: 'BA' }
+    ]
+  }), {
+    format: 'zombicide-collection',
+    version: 1,
+    name: 'Black Plague et No Rest for the Wicked',
+    ownedProducts: ['black-plague', 'no-rest-for-wicked'],
+    tileWhitelist: [],
+    tileBlacklist: []
+  });
+  assert.equal(availableExpansionMarker.status, 0);
+  assert.equal(availableExpansionMarker.output.valid, true);
 
   const markerLimit = validateStrictWithCollection('marker-limit', mission({
     markers: [
@@ -131,6 +204,18 @@ try {
   }));
   assert.equal(internalInvasion.status, 2);
   assert.ok(internalInvasion.output.errors.some(error => error.code === 'INVASION_OUTER_EDGE'));
+
+  const internalColoredInvasion = validate('internal-colored-invasion', mission({
+    markers: [{ id: 'invasion-blue-1', type: 'invasion-blue', tile: 'tile-1', x: .5, y: .5, label: 'IB' }]
+  }));
+  assert.equal(internalColoredInvasion.status, 2);
+  assert.ok(internalColoredInvasion.output.errors.some(error => error.code === 'INVASION_OUTER_EDGE'));
+
+  const validBarrierAnchor = validate('valid-barrier-anchor', mission({
+    markers: [{ id: 'barrier-1', type: 'barrier', tile: 'tile-1', anchor: 'grid-edge-h-1-2', x: .5, y: 1 / 3, label: 'B' }]
+  }));
+  assert.equal(validBarrierAnchor.status, 0);
+  assert.equal(validBarrierAnchor.output.valid, true);
 
   const mismatchedAnchor = validate('mismatched-anchor', mission({
     markers: [{ id: 'start-1', type: 'start', tile: 'tile-1', anchor: 'grid-cell-1-1', x: .5, y: .5, label: 'S' }]

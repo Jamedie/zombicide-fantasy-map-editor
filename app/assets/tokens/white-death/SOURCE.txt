@@ -1,0 +1,6 @@
+Source : package BuildAndPlay « Zombicide - White Death », version V2.0.
+Auteur du package : Pug and Play.
+GUID : ZOMBICIDEWHITEDEATHMAY52420251288.
+
+Les fichiers sont extraits sans génération d'image. Les rectangles et masques viennent
+des définitions content_200.ini et content_300.ini incluses dans le package.

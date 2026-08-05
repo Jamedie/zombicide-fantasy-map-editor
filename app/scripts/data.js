@@ -3,6 +3,7 @@ export const PRODUCTS = [
   { id: 'wulfsburg', name: 'Wulfsburg', from: 10, to: 11 },
   { id: 'green-horde', name: 'Green Horde', from: 12, to: 20 },
   { id: 'friends-and-foes', name: 'Friends and Foes', from: 21, to: 25 },
+  { id: 'no-rest-for-wicked', name: 'No Rest for the Wicked' },
   { id: 'white-death', name: 'White Death', from: 26, to: 34 },
   { id: 'eternal-empire', name: 'Eternal Empire', from: 35, to: 38 },
   { id: 'tmnt-timecrash', name: 'TMNT Timecrash', from: 39, to: 42 },

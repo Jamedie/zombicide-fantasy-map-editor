@@ -1,0 +1,13 @@
+Zombicide: Black Plague (Guillotine Games) Tile Pack
+
+- Name: G-Zombicide-BP
+- Version: 1.0
+- Graphic design: Nicolas Fructus, Raphaël Guiton, Mathieu Harlaut
+- Pack creator: mzi
+
+Zombicide; a game edited by Guillotine Games. Copyright © Guillotine Games, 2012-2015. All rights reserved. Non-binding pictures.
+
+Guillotine Games has granted licence to make use of all included image files with Board Game Map Editor <https://sourceforge.net/projects/bgmapeditor/> and future versions of the program. 
+Graphic files distributed in this tile pack are freely distributable and editable, for non-commercial use only.
+
+Create your own scenarios and submit them on the official website: <http://guillotinegames.com>

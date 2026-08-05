@@ -1,0 +1,5 @@
+Source : package BuildAndPlay « Zombicide - White Death - Eternal Empire ».
+Auteur du package : Pug and Play.
+
+Les fichiers sont extraits sans génération d'image. Les rectangles viennent de la
+définition content_200.ini incluse dans le package.

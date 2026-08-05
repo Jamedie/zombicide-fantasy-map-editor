@@ -5,6 +5,7 @@ const BASE_CATALOG = createBaseCatalog();
 const {
   MARKERS,
   MARKER_CATEGORIES,
+  INVASION_MARKERS,
   CATALOG_PREFERRED_MARKERS,
   EDGE_DEFAULT_MARKERS,
   EDGE_ANCHOR_MARKERS,
@@ -287,7 +288,14 @@ function markerBackground(markerOrType) {
   return marker?.color || '#555';
 }
 function markerHtml(type, label, extraClass = '') {
-  return `<span class="marker-swatch marker-${type} type-${type} ${extraClass}" style="background:${esc(markerBackground(type))}"><span>${esc(label)}</span></span>`;
+  const marker = markerType(type);
+  const image = marker?.image ? `<img src="${esc(assetUrl(marker.image))}" alt="" draggable="false" />` : `<span>${esc(label)}</span>`;
+  return `<span class="marker-swatch marker-${type} type-${type} ${marker?.image ? 'has-image' : ''} ${extraClass}" style="background:${marker?.image ? 'transparent' : esc(markerBackground(type))}">${image}</span>`;
+}
+function markerImageDimensions(marker, size = marker?.renderSize || 42) {
+  const [sourceWidth, sourceHeight] = marker?.imageSize || [1, 1];
+  if (sourceWidth >= sourceHeight) return { width: size, height: size * sourceHeight / sourceWidth };
+  return { width: size * sourceWidth / sourceHeight, height: size };
 }
 
 function render() {
@@ -413,10 +421,16 @@ function renderBoard() {
     const tile = placedTile(marker.tile); if (!tile) return;
     const point = displayPoints.get(marker.id) || markerBoardPoint(marker);
     const node = document.createElement('div');
-    node.className = `marker-node marker-${marker.type} type-${marker.type} ${markerAvailable(marker.type) ? '' : 'unavailable'} ${selected?.kind === 'marker' && selected.id === marker.id ? 'selected' : ''}`;
+    const meta = markerType(marker.type);
+    node.className = `marker-node marker-${marker.type} type-${marker.type} ${meta?.image ? 'has-image' : ''} ${markerAvailable(marker.type) ? '' : 'unavailable'} ${selected?.kind === 'marker' && selected.id === marker.id ? 'selected' : ''}`;
     node.dataset.markerId = marker.id; node.style.left = `${point.x * TILE_SIZE}px`; node.style.top = `${point.y * TILE_SIZE}px`;
-    node.style.background = markerBackground(marker.type);
-    node.innerHTML = `<span>${esc(marker.label)}</span>`; board.append(node);
+    if (meta?.image) {
+      const dimensions = markerImageDimensions(meta);
+      node.style.setProperty('--marker-width', `${dimensions.width}px`);
+      node.style.setProperty('--marker-height', `${dimensions.height}px`);
+    }
+    node.style.background = meta?.image ? 'transparent' : markerBackground(marker.type);
+    node.innerHTML = meta?.image ? `<img src="${esc(assetUrl(meta.image))}" alt="${esc(meta.name)}" draggable="false" />` : `<span>${esc(marker.label)}</span>`; board.append(node);
   });
 }
 function renderInspector() {
@@ -536,10 +550,10 @@ function firstOpenMarkerPosition(tile, candidates) {
 function edgeMarkerPosition(tile, type) {
   const centers = [1 / 6, .5, 5 / 6]; const inset = 1 / 6;
   const candidates = [];
-  if (type !== 'invasion' || tile.row === 0) centers.forEach(x => candidates.push({ x, y: inset }));
-  if (type !== 'invasion' || tile.column === mission.grid.columns - 1) centers.forEach(y => candidates.push({ x: 1 - inset, y }));
-  if (type !== 'invasion' || tile.row === mission.grid.rows - 1) [...centers].reverse().forEach(x => candidates.push({ x, y: 1 - inset }));
-  if (type !== 'invasion' || tile.column === 0) [...centers].reverse().forEach(y => candidates.push({ x: inset, y }));
+  if (!INVASION_MARKERS.has(type) || tile.row === 0) centers.forEach(x => candidates.push({ x, y: inset }));
+  if (!INVASION_MARKERS.has(type) || tile.column === mission.grid.columns - 1) centers.forEach(y => candidates.push({ x: 1 - inset, y }));
+  if (!INVASION_MARKERS.has(type) || tile.row === mission.grid.rows - 1) [...centers].reverse().forEach(x => candidates.push({ x, y: 1 - inset }));
+  if (!INVASION_MARKERS.has(type) || tile.column === 0) [...centers].reverse().forEach(y => candidates.push({ x: inset, y }));
   return firstOpenMarkerPosition(tile, candidates.length ? candidates : [{ x: .167, y: inset }]);
 }
 function centralMarkerPosition(tile) {
@@ -551,7 +565,7 @@ function addMarker(type) {
   if (!markerAvailable(meta)) return toast(`${meta.name} nécessite ${productName(meta.product)} dans la collection.`, true);
   if (markerLimitReached(type)) return toast(`Limite atteinte pour ${meta.name} (${markerLimit(type)}).`, true);
   let tile = selected?.kind === 'tile' ? item() : mission.tiles[0]; if (!tile) return toast('Placez d’abord une tuile sur la grille.', true);
-  if (type === 'invasion' && tile.column > 0 && tile.column < mission.grid.columns - 1 && tile.row > 0 && tile.row < mission.grid.rows - 1) {
+  if (INVASION_MARKERS.has(type) && tile.column > 0 && tile.column < mission.grid.columns - 1 && tile.row > 0 && tile.row < mission.grid.rows - 1) {
     tile = mission.tiles.find(entry => entry.column === 0 || entry.column === mission.grid.columns - 1 || entry.row === 0 || entry.row === mission.grid.rows - 1) || tile;
   }
   const sameType = mission.markers.filter(marker => marker.type === type).length;
@@ -633,7 +647,10 @@ function imageAsDataUrl(source) {
   });
 }
 async function embedTileImages(svg) {
-  const sources = [...new Set(mission.tiles.map(tile => catalogTile(tile.catalogId)?.image).filter(Boolean))];
+  const sources = [...new Set([
+    ...mission.tiles.map(tile => catalogTile(tile.catalogId)?.image),
+    ...mission.markers.map(marker => markerType(marker.type)?.image)
+  ].filter(Boolean))];
   for (const source of sources) svg = svg.split(xml(source)).join(await imageAsDataUrl(source));
   return svg;
 }
@@ -646,6 +663,14 @@ function svgMarkerShape(type, id, x, y, size, radius) {
   if (colors.length === 1) return `<rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}" fill="${xml(colors[0])}" stroke="#fff" stroke-width="3"/>`;
   const clipId = `clip-${svgId(id)}-${Math.round(x * 100)}-${Math.round(y * 100)}`;
   return `<clipPath id="${clipId}"><rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}"/></clipPath><g clip-path="url(#${clipId})"><rect x="${left}" y="${top}" width="${size / 2}" height="${size}" fill="${xml(colors[0])}"/><rect x="${x}" y="${top}" width="${size / 2}" height="${size}" fill="${xml(colors[1])}"/></g><rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}" fill="none" stroke="#fff" stroke-width="3"/>`;
+}
+function svgMarkerContent(type, id, x, y, size, radius, label, fontSize = 12) {
+  const marker = markerType(type);
+  if (marker?.image) {
+    const { width, height } = markerImageDimensions(marker, marker.renderSize || size);
+    return `<image href="${xml(marker.image)}" x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet"/>`;
+  }
+  return `${svgMarkerShape(type, id, x, y, size, radius)}<text x="${x}" y="${y + fontSize * .4}" text-anchor="middle" fill="#fff" font-size="${fontSize}" font-weight="bold">${xml(label)}</text>`;
 }
 function wrapSvgText(text, maxLength = 32) {
   const words = String(text ?? '').split(/\s+/).filter(Boolean);
@@ -684,12 +709,12 @@ function missionSvg() {
     return `<g transform="translate(${x} ${y})"><g transform="rotate(${tile.rotation} 120 120)">${art}<rect width="240" height="240" fill="none" stroke="#111" stroke-width="5"/></g>${mission.render.showTileNames ? `<rect x="8" y="8" width="42" height="25" rx="3" fill="#111" stroke="#fff"/><text x="29" y="26" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">${xml(data.code)}</text>` : ''}</g>`;
   }).join('');
   const displayPoints = markerDisplayPoints();
-  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerBoardPoint(marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate', 'crypt', 'crypt-yellow'].includes(marker.type); const size = marker.type === 'door' ? 27 : 35; const rotation = marker.type === 'door' ? ` transform="rotate(45 ${x} ${y})"` : ''; const textRotation = marker.type === 'door' ? ` transform="rotate(-45 ${x} ${y})"` : ''; return `<g${rotation}>${svgMarkerShape(marker.type, marker.id, x, y, size, square ? 3 : size / 2)}<text x="${x}" y="${y + 5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold"${textRotation}>${xml(marker.label)}</text></g>`; }).join('');
+  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerBoardPoint(marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate', 'crypt', 'crypt-yellow'].includes(marker.type); const size = marker.type === 'door' ? 36 : 35; return `<g>${svgMarkerContent(marker.type, marker.id, x, y, size, square ? 3 : size / 2, marker.label)}</g>`; }).join('');
   const counts = mission.markers.reduce((out, marker) => { out[marker.type] = (out[marker.type] || 0) + 1; return out; }, {});
   const legendHeight = Object.keys(counts).length * 28 + 80;
   const secondary = sideWidth ? secondaryObjectivesSvg(width + 18, 26 + legendHeight) : { svg: '', height: 0 };
   const height = Math.max(boardHeight + 54, legendHeight + secondary.height + 40);
-  const legend = sideWidth && mission.markers.length ? `<g transform="translate(${width + 18} 26)"><text fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">LÉGENDE</text>${Object.entries(counts).map(([type, count], index) => { const symbol = mission.markers.find(marker => marker.type === type)?.label || markerType(type)?.label || '?'; const centerY = 30 + index * 28; const meta = markerType(type); const limit = markerLimit(meta); return `${svgMarkerShape(type, `legend-${type}-${index}`, 10, centerY, 18, 9)}<text x="10" y="${centerY + 3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">${xml(symbol)}</text><text x="28" y="${centerY + 4}" fill="#eee" font-size="11">${xml(meta?.name || type)} ${limit === null ? `× ${count}` : `${count}/${limit}`}</text>`; }).join('')}</g>` : '';
+  const legend = sideWidth && mission.markers.length ? `<g transform="translate(${width + 18} 26)"><text fill="#d0a44a" font-size="10" font-weight="bold" letter-spacing="2">LÉGENDE</text>${Object.entries(counts).map(([type, count], index) => { const symbol = mission.markers.find(marker => marker.type === type)?.label || markerType(type)?.label || '?'; const centerY = 30 + index * 28; const meta = markerType(type); const limit = markerLimit(meta); return `${svgMarkerContent(type, `legend-${type}-${index}`, 10, centerY, 20, 9, symbol, 8)}<text x="28" y="${centerY + 4}" fill="#eee" font-size="11">${xml(meta?.name || type)} ${limit === null ? `× ${count}` : `${count}/${limit}`}</text>`; }).join('')}</g>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width + sideWidth}" height="${height}" viewBox="0 0 ${width + sideWidth} ${height}"><rect width="100%" height="100%" fill="#15181c"/><text x="14" y="35" fill="#f0c765" font-family="Georgia,serif" font-size="20" font-weight="bold">${xml(mission.name)}</text><g transform="translate(0 54)">${tiles}${markers}</g>${legend}${secondary.svg}</svg>`;
 }
 

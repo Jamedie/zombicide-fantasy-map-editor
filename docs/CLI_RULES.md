@@ -49,11 +49,13 @@ La disponibilité des boîtes et des tuiles ne doit jamais être codée en dur d
 
 Types reconnus :
 
-`start`, `objective`, `invasion`, `exit`, `door`, `spawn`, `npc`, `vault`, `crypt`, `crypt-yellow`, `noise`, `gate`, `rubble`, `guard`, `statue`, `chi`.
+Types génériques : `start`, `objective`, `objective-blue`, `objective-green`, `invasion`, `invasion-blue`, `invasion-green`, `invasion-necromancer-beige`, `invasion-necromancer-brown`, `invasion-necromancer-green`, `invasion-necromancer-grey`, `invasion-necromancer-purple`, `invasion-necromancer-turquoise`, `exit`, `door`, `spawn`, `npc`, `vault`, `noise`, `dragon-bile`, `gate` et `rubble`.
+
+Types liés aux boîtes : `crypt`, `crypt-yellow`, `rotten`, `barrier`, `hedge`, `horde`, `trebuchet`, `orc-abomination`, `orc-fatty`, `orc-necromancer`, `orc-runner`, `orc-walker`, `familiar-cat`, `familiar-dog`, `familiar-wolf`, `tainted-abomination`, `tainted-walker`, `ballista`, `necromantic-dragon`, `ratz`, `spectral-walker`, `start-white-death`, `exit-white-death`, `invasion-white-death-1`, `invasion-white-death-2`, `invasion-white-death-3`, `invasion-white-death-4`, `invasion-white-death-defiler`, `white-death-flag-zone`, `white-death-rope-ladder`, `white-death-cauldron`, `white-death-beacon`, `white-death-noise`, `white-death-corruption`, `white-death-objective-red`, `white-death-objective-green`, `white-death-objective-blue`, `guard`, `invasion-eternal-empire-5` et `statue`.
 
 Chaque marqueur référence une instance de tuile existante. Un identifiant de point d’ancrage reste technique : l’interface peut n’afficher que son mode de placement, mais le JSON conserve l’identifiant exact.
 
-Chaque type de marqueur possède aussi une catégorie (`base`, `custom` ou `unique`) exposée par `context --json` dans `constraints.markerCatalog`. Les marqueurs `base` et `custom` n’appartiennent à aucune boîte et restent toujours disponibles. Les marqueurs `unique` possèdent une boîte d’origine ; si une collection est appliquée et que cette boîte n’est pas possédée, ils produisent un avertissement. Avec `--strict`, cet avertissement fait échouer la commande.
+Chaque type de marqueur possède aussi une catégorie (`base`, `custom` ou `unique`) exposée par `context --json` dans `constraints.markerCatalog`. Les marqueurs `base` et `custom` n’appartiennent à aucune boîte et restent toujours disponibles. Les marqueurs `unique` possèdent une boîte d’origine ; si une collection est appliquée et que cette boîte n’est pas possédée, ils produisent un avertissement. Avec `--strict`, cet avertissement fait échouer la commande. Cela s’applique notamment à Green Horde, Friends and Foes, No Rest for the Wicked, White Death et Eternal Empire : leurs marqueurs ne sont utilisables que lorsque l’extension correspondante est cochée dans la collection.
 
 Un marqueur peut aussi exposer `colors` pour représenter plusieurs couleurs sur un même token, et `limit` pour plafonner le nombre d’exemplaires sur une carte. Une limite vaut `null` tant qu’elle n’est pas renseignée ; si elle est dépassée, la CLI produit un avertissement. Avec `--strict`, cet avertissement fait échouer la commande.
 
@@ -79,7 +81,7 @@ Un marqueur peut aussi exposer `colors` pour représenter plusieurs couleurs sur
 
 ## Grilles et gravats
 
-Les marqueurs `gate` et `rubble` acceptent :
+Les marqueurs `gate`, `rubble`, `barrier` et `hedge` acceptent :
 
 - un slot de catalogue du même type ;
 - un placement libre sans `anchor` ;
@@ -96,7 +98,7 @@ Ces points sont fixes par rapport à la grille et ne tournent pas avec l’image
 
 ## Départ, sortie et invasion
 
-Les marqueurs `start`, `exit` et `invasion` acceptent :
+Les marqueurs `start`, `start-white-death`, `exit`, `exit-white-death` et tous les types `invasion*` acceptent :
 
 - un slot de catalogue du même type ;
 - un placement libre sans `anchor` ;
@@ -108,11 +110,11 @@ Les identifiants générés suivent :
 grid-cell-<ligne 1..3>-<colonne 1..3>
 ```
 
-Pour ces trois types, la case référencée doit appartenir au périmètre de la grille 3×3. Ces points sont fixes par rapport à la grille. Une `invasion` doit en plus se trouver sur un côté extérieur du plateau.
+Pour ces types, la case référencée doit appartenir au périmètre de la grille 3×3. Ces points sont fixes par rapport à la grille. Tout type `invasion*` doit en plus se trouver sur un côté extérieur du plateau.
 
 ## Objectifs et autres marqueurs centraux
 
-Les marqueurs `objective`, `spawn` (Nécromancien), `npc`, `vault`, `crypt`, `crypt-yellow`, `noise`, `guard`, `statue` et `chi` utilisent par défaut le centre exact d’une case de la grille 3×3. Le premier occupe la case centrale, puis les suivants utilisent les autres centres disponibles.
+Tous les autres marqueurs, notamment les objectifs colorés, machines, figurines, familiers, monstres et marqueurs de scénario, utilisent par défaut le centre exact d’une case de la grille 3×3. Le premier occupe la case centrale, puis les suivants utilisent les autres centres disponibles.
 
 Ils acceptent :
 
