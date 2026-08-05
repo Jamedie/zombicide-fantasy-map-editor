@@ -6,6 +6,7 @@ const {
   MARKERS,
   MARKER_CATEGORIES,
   INVASION_MARKERS,
+  DOOR_MARKERS,
   CATALOG_PREFERRED_MARKERS,
   EDGE_DEFAULT_MARKERS,
   EDGE_ANCHOR_MARKERS,
@@ -55,6 +56,7 @@ function duplicatePhysicalTiles(tiles) {
   return duplicates;
 }
 function markerType(type) { return MARKERS.find(marker => marker.type === type); }
+function isDoorMarker(type) { return DOOR_MARKERS.has(type); }
 function markerCategoryName(id) { return MARKER_CATEGORIES.find(category => category.id === id)?.label || id; }
 function markerOriginName(marker) { return marker?.product ? productName(marker.product) : marker?.category === 'custom' ? 'Custom' : 'Base'; }
 function markerLimit(markerOrType) {
@@ -142,7 +144,7 @@ function tileAnchors(tile) {
 }
 function catalogTileAnchors(tileId) { return catalogConfiguration(tileId).doorAnchors ?? []; }
 function markerAnchors(tile, type) {
-  if (type === 'door') return tileAnchors(tile);
+  if (isDoorMarker(type)) return tileAnchors(tile);
   const configured = catalogSlots(tile, type);
   if (CATALOG_PREFERRED_MARKERS.has(type)) return [...configured, ...gridEdgeAnchors(tile)];
   if (EDGE_ANCHOR_MARKERS.has(type)) return [...configured, ...gridCellAnchors(true)];
@@ -174,18 +176,18 @@ function sameDoorConnection(first, second) {
   return Math.abs(first.boundary - second.boundary) < .001 && Math.abs(first.offset - second.offset) <= DOOR_CONNECTION_TOLERANCE;
 }
 function markerDoorConnection(marker) {
-  if (marker?.type !== 'door') return null;
+  if (!isDoorMarker(marker?.type)) return null;
   const tile = placedTile(marker.tile);
   const anchor = tile && tileAnchors(tile).find(entry => entry.id === marker.anchor);
   return doorConnection(tile, anchor);
 }
 function doorMarkerAtConnection(tile, anchor, exceptMarkerId) {
   const connection = doorConnection(tile, anchor);
-  return mission.markers.find(marker => marker.id !== exceptMarkerId && marker.type === 'door' && sameDoorConnection(connection, markerDoorConnection(marker)));
+  return mission.markers.find(marker => marker.id !== exceptMarkerId && isDoorMarker(marker.type) && sameDoorConnection(connection, markerDoorConnection(marker)));
 }
 function duplicateDoorConnections() {
   const seen = []; const duplicates = [];
-  for (const marker of mission.markers.filter(entry => entry.type === 'door')) {
+  for (const marker of mission.markers.filter(entry => isDoorMarker(entry.type))) {
     const connection = markerDoorConnection(marker); if (!connection) continue;
     const existing = seen.find(entry => sameDoorConnection(entry.connection, connection));
     if (existing) duplicates.push([existing.marker, marker]);
@@ -287,10 +289,14 @@ function markerBackground(markerOrType) {
   if (Array.isArray(marker?.colors) && marker.colors.length > 1) return `linear-gradient(135deg, ${marker.colors[0]} 0 50%, ${marker.colors[1]} 50% 100%)`;
   return marker?.color || '#555';
 }
-function markerHtml(type, label, extraClass = '') {
+function markerImage(marker, open = false) {
+  return open && marker?.imageOpen ? marker.imageOpen : marker?.image;
+}
+function markerHtml(type, label, extraClass = '', open = false) {
   const marker = markerType(type);
-  const image = marker?.image ? `<img src="${esc(assetUrl(marker.image))}" alt="" draggable="false" />` : `<span>${esc(label)}</span>`;
-  return `<span class="marker-swatch marker-${type} type-${type} ${marker?.image ? 'has-image' : ''} ${extraClass}" style="background:${marker?.image ? 'transparent' : esc(markerBackground(type))}">${image}</span>`;
+  const source = markerImage(marker, open);
+  const image = source ? `<img src="${esc(assetUrl(source))}" alt="" draggable="false" />` : `<span>${esc(label)}</span>`;
+  return `<span class="marker-swatch marker-${type} type-${type} ${source ? 'has-image' : ''} ${extraClass}" style="background:${source ? 'transparent' : esc(markerBackground(type))}">${image}</span>`;
 }
 function markerImageDimensions(marker, size = marker?.renderSize || 42) {
   const [sourceWidth, sourceHeight] = marker?.imageSize || [1, 1];
@@ -430,7 +436,8 @@ function renderBoard() {
       node.style.setProperty('--marker-height', `${dimensions.height}px`);
     }
     node.style.background = meta?.image ? 'transparent' : markerBackground(marker.type);
-    node.innerHTML = meta?.image ? `<img src="${esc(assetUrl(meta.image))}" alt="${esc(meta.name)}" draggable="false" />` : `<span>${esc(marker.label)}</span>`; board.append(node);
+    const source = markerImage(meta, marker.open === true);
+    node.innerHTML = source ? `<img src="${esc(assetUrl(source))}" alt="${esc(meta.name)}" draggable="false" />` : `<span>${esc(marker.label)}</span>`; board.append(node);
   });
 }
 function renderInspector() {
@@ -446,20 +453,23 @@ function renderInspector() {
     document.querySelector('#replace-tile').hidden = availability(data).available;
   } else {
     const type = markerType(current.type);
-    document.querySelector('#selected-marker-icon').innerHTML = markerHtml(current.type, current.label);
+    document.querySelector('#selected-marker-icon').innerHTML = markerHtml(current.type, current.label, '', current.open === true);
     document.querySelector('#selected-marker-name').textContent = type?.name || current.type;
     document.querySelector('#selected-marker-meta').textContent = type ? `${markerOriginName(type)} — ${markerCategoryName(type.category)}` : 'Marqueur de mission';
     document.querySelector('#marker-label').value = current.label;
     document.querySelector('#marker-x').value = Math.round(current.x * 100);
     document.querySelector('#marker-y').value = Math.round(current.y * 100);
-    const anchoredDoor = current.type === 'door' && !!current.anchor;
+    const doorStateField = document.querySelector('#door-state-field');
+    doorStateField.hidden = !isDoorMarker(current.type) || !type?.imageOpen;
+    document.querySelector('#marker-open').value = current.open === true ? 'open' : 'closed';
+    const anchoredDoor = isDoorMarker(current.type) && !!current.anchor;
     document.querySelector('#marker-x').disabled = anchoredDoor;
     document.querySelector('#marker-y').disabled = anchoredDoor;
-    const supportsAnchors = current.type === 'door' || CATALOG_PREFERRED_MARKERS.has(current.type) || EDGE_ANCHOR_MARKERS.has(current.type) || CELL_CENTER_MARKERS.has(current.type);
+    const supportsAnchors = isDoorMarker(current.type) || CATALOG_PREFERRED_MARKERS.has(current.type) || EDGE_ANCHOR_MARKERS.has(current.type) || CELL_CENTER_MARKERS.has(current.type);
     const anchorField = document.querySelector('#anchor-field'); anchorField.hidden = !supportsAnchors;
     if (supportsAnchors) {
       const tile = placedTile(current.tile); const anchors = tile ? markerAnchors(tile, current.type) : [];
-      if (current.type === 'door') {
+      if (isDoorMarker(current.type)) {
         const anchorOptions = anchors.map(anchor => {
           const used = doorMarkerAtConnection(tile, anchor, current.id);
           return `<option value="${anchor.id}" ${current.anchor === anchor.id ? 'selected' : ''} ${used ? 'disabled' : ''}>${esc(anchor.label || anchor.id)}${used ? ' · emplacement utilisé' : ''}</option>`;
@@ -600,7 +610,8 @@ function addMarker(type) {
   const sameType = mission.markers.filter(marker => marker.type === type).length;
   const defaultPosition = EDGE_DEFAULT_MARKERS.has(type) ? edgeMarkerPosition(tile, type) : centralMarkerPosition(tile);
   let marker = { id: uid(type), type, tile: tile.instanceId, ...defaultPosition, label: ['objective', 'invasion'].includes(type) ? String(sameType + 1) : meta.label };
-  if (type === 'door') {
+  if (isDoorMarker(type)) {
+    marker.open = false;
     const anchor = tileAnchors(tile).find(entry => !doorMarkerAtConnection(tile, entry));
     if (anchor) marker = { ...marker, x: anchor.x, y: anchor.y, anchor: anchor.id };
   } else if (CATALOG_PREFERRED_MARKERS.has(type)) {
@@ -629,7 +640,7 @@ function setMarkerPosition(marker, clientX, clientY) {
   const column = clamp(Math.floor(boardX / TILE_SIZE), 0, mission.grid.columns - 1); const row = clamp(Math.floor(boardY / TILE_SIZE), 0, mission.grid.rows - 1);
   const tile = mission.tiles.find(entry => entry.column === column && entry.row === row); if (!tile) return;
   let x = clamp(boardX / TILE_SIZE - column, 0, 1); let y = clamp(boardY / TILE_SIZE - row, 0, 1);
-  if (marker.type === 'door') {
+  if (isDoorMarker(marker.type)) {
     const anchor = nearestAnchor(tile, x, y, .12);
     if (anchor && !doorMarkerAtConnection(tile, anchor, marker.id)) {
       x = anchor.x; y = anchor.y; marker.anchor = anchor.id;
@@ -651,7 +662,7 @@ function normalizeMission(data) {
     format: 'zombicide-map', version: 1, name: data.name || data.title || 'Mission importée',
     grid: { columns: clamp(Number(data.grid.columns) || 3, 1, 4), rows: clamp(Number(data.grid.rows) || 2, 1, 4) },
     tiles: data.tiles.map((tile, index) => ({ instanceId: tile.instanceId || tile.instance || `tile-import-${index}`, catalogId: tile.catalogId || String(tile.id || '').toLowerCase(), code: tile.code, face: tile.face, column: Number(tile.column) || 0, row: Number(tile.row) || 0, rotation: Number(tile.rotation) || 0, customDoorAnchors: tile.customDoorAnchors || [] })),
-    markers: data.markers.map((marker, index) => ({ id: marker.id || `marker-import-${index}`, type: marker.type, tile: marker.tile, x: clamp(Number(marker.x) || 0, 0, 1), y: clamp(Number(marker.y) || 0, 0, 1), label: marker.label || markerType(marker.type)?.label || '?', anchor: marker.anchor })),
+    markers: data.markers.map((marker, index) => ({ id: marker.id || `marker-import-${index}`, type: marker.type, tile: marker.tile, x: clamp(Number(marker.x) || 0, 0, 1), y: clamp(Number(marker.y) || 0, 0, 1), label: marker.label || markerType(marker.type)?.label || '?', anchor: marker.anchor, ...(isDoorMarker(marker.type) ? { open: marker.open === true } : {}) })),
     render: { showTileNames: data.render?.showTileNames !== false, showLegend: data.render?.showLegend !== false, background: data.render?.background || '#24282d' }
   };
   const duplicate = duplicatePhysicalTiles(normalized.tiles)[0];
@@ -693,11 +704,12 @@ function svgMarkerShape(type, id, x, y, size, radius) {
   const clipId = `clip-${svgId(id)}-${Math.round(x * 100)}-${Math.round(y * 100)}`;
   return `<clipPath id="${clipId}"><rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}"/></clipPath><g clip-path="url(#${clipId})"><rect x="${left}" y="${top}" width="${size / 2}" height="${size}" fill="${xml(colors[0])}"/><rect x="${x}" y="${top}" width="${size / 2}" height="${size}" fill="${xml(colors[1])}"/></g><rect x="${left}" y="${top}" width="${size}" height="${size}" rx="${radius}" fill="none" stroke="#fff" stroke-width="3"/>`;
 }
-function svgMarkerContent(type, id, x, y, size, radius, label, fontSize = 12) {
+function svgMarkerContent(type, id, x, y, size, radius, label, fontSize = 12, open = false) {
   const marker = markerType(type);
-  if (marker?.image) {
+  const source = markerImage(marker, open);
+  if (source) {
     const { width, height } = markerImageDimensions(marker, marker.renderSize || size);
-    return `<image href="${xml(marker.image)}" x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet"/>`;
+    return `<image href="${xml(source)}" x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet"/>`;
   }
   return `${svgMarkerShape(type, id, x, y, size, radius)}<text x="${x}" y="${y + fontSize * .4}" text-anchor="middle" fill="#fff" font-size="${fontSize}" font-weight="bold">${xml(label)}</text>`;
 }
@@ -738,7 +750,7 @@ function missionSvg() {
     return `<g transform="translate(${x} ${y})"><g transform="rotate(${tile.rotation} 120 120)">${art}<rect width="240" height="240" fill="none" stroke="#111" stroke-width="5"/></g>${mission.render.showTileNames ? `<rect x="8" y="8" width="42" height="25" rx="3" fill="#111" stroke="#fff"/><text x="29" y="26" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">${xml(data.code)}</text>` : ''}</g>`;
   }).join('');
   const displayPoints = markerDisplayPoints();
-  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerBoardPoint(marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = ['door', 'invasion', 'exit', 'gate', 'crypt', 'crypt-yellow'].includes(marker.type); const size = marker.type === 'door' ? 36 : 35; return `<g>${svgMarkerContent(marker.type, marker.id, x, y, size, square ? 3 : size / 2, marker.label)}</g>`; }).join('');
+  const markers = mission.markers.map(marker => { const point = displayPoints.get(marker.id) || markerBoardPoint(marker); if (!point) return ''; const x = point.x * TILE_SIZE; const y = point.y * TILE_SIZE; const square = isDoorMarker(marker.type) || ['invasion', 'exit', 'gate', 'crypt', 'crypt-yellow'].includes(marker.type); const size = isDoorMarker(marker.type) ? 36 : 35; return `<g>${svgMarkerContent(marker.type, marker.id, x, y, size, square ? 3 : size / 2, marker.label, 12, marker.open === true)}</g>`; }).join('');
   const counts = mission.markers.reduce((out, marker) => { out[marker.type] = (out[marker.type] || 0) + 1; return out; }, {});
   const legendHeight = Object.keys(counts).length * 28 + 80;
   const secondary = sideWidth ? secondaryObjectivesSvg(width + 18, 26 + legendHeight) : { svg: '', height: 0 };
@@ -805,15 +817,16 @@ document.querySelector('#delete-selected').addEventListener('click', () => { if 
 document.querySelector('#delete-marker').addEventListener('click', () => { if (selected?.kind === 'marker') mission.markers = mission.markers.filter(marker => marker.id !== selected.id); selected = null; render(); });
 document.querySelector('#replace-tile').addEventListener('click', () => { const tile = item(); if (!tile) return; const usedKeys = new Set(mission.tiles.filter(entry => entry !== tile).map(physicalTileKey)); const replacement = catalog.find(candidate => availability(candidate).available && candidate.id !== tile.catalogId && !usedKeys.has(physicalTileKey(candidate))); if (!replacement) return toast('Aucune tuile de remplacement disponible.', true); tile.catalogId = replacement.id; tile.code = replacement.code; tile.face = replacement.face; toast(`Remplacée par ${replacement.code}.`); render(); });
 document.querySelector('#marker-label').addEventListener('input', event => { const marker = item(); if (marker) { marker.label = event.target.value; renderBoard(); renderLegend(); saveAll(); } });
+document.querySelector('#marker-open').addEventListener('change', event => { const marker = item(); if (marker && isDoorMarker(marker.type)) { marker.open = event.target.value === 'open'; render(); } });
 ['x', 'y'].forEach(axis => document.querySelector(`#marker-${axis}`).addEventListener('change', event => { const marker = item(); if (marker) { marker[axis] = clamp(Number(event.target.value) / 100, 0, 1); marker.anchor = undefined; render(); } }));
 document.querySelector('#marker-anchor').addEventListener('change', event => {
   const marker = item(); const tile = marker && placedTile(marker.tile);
   if (!marker || !tile) return;
-  if (!event.target.value && (marker.type === 'door' || CATALOG_PREFERRED_MARKERS.has(marker.type) || EDGE_ANCHOR_MARKERS.has(marker.type) || CELL_CENTER_MARKERS.has(marker.type))) {
+  if (!event.target.value && (isDoorMarker(marker.type) || CATALOG_PREFERRED_MARKERS.has(marker.type) || EDGE_ANCHOR_MARKERS.has(marker.type) || CELL_CENTER_MARKERS.has(marker.type))) {
     marker.anchor = undefined;
     return render();
   }
-  if (marker.type !== 'door' && event.target.value.startsWith('mode:')) {
+  if (!isDoorMarker(marker.type) && event.target.value.startsWith('mode:')) {
     const source = event.target.value.slice(5);
     const anchor = markerAnchors(tile, marker.type)
       .filter(entry => entry.source === source)
@@ -829,7 +842,7 @@ document.querySelector('#marker-anchor').addEventListener('change', event => {
   }
   const anchor = markerAnchors(tile, marker.type).find(entry => entry.id === event.target.value);
   if (!anchor) return;
-  const occupied = marker.type === 'door'
+  const occupied = isDoorMarker(marker.type)
     ? doorMarkerAtConnection(tile, anchor, marker.id)
     : markerAtAnchor(tile, marker.type, anchor, marker.id);
   if (occupied) {

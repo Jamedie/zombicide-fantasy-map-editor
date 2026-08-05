@@ -70,6 +70,11 @@ try {
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'invasion-white-death-1' && marker.product === 'white-death' && marker.limit === 1 && marker.image));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'statue' && marker.product === 'eternal-empire' && marker.limit === 3 && marker.image));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'invasion-eternal-empire-5' && marker.product === 'eternal-empire' && marker.limit === 1 && marker.image));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'door-blue' && marker.product === 'black-plague' && marker.limit === 1 && marker.image && marker.imageOpen));
+  assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'door-green' && marker.product === 'black-plague' && marker.limit === 1 && marker.image && marker.imageOpen));
+  for (const cryptDoorType of ['vault-door-purple-entry', 'vault-door-yellow-entry', 'vault-door-purple-exit', 'vault-door-yellow-exit']) {
+    assert.ok(context.constraints.markerCatalog.some(marker => marker.type === cryptDoorType && marker.product === 'black-plague' && marker.limit === 2 && marker.image && marker.imageOpen));
+  }
   for (const removedType of ['first-player', 'magic-dome', 'dragon-fire', 'locator-1', 'locator-2', 'area-blue', 'area-red', 'extra-action']) {
     assert.ok(!context.constraints.markerCatalog.some(marker => marker.type === removedType));
   }
@@ -236,10 +241,25 @@ try {
   assert.ok(missingRequiredDoor.output.errors.some(error => error.code === 'REQUIRED_DOOR_MISSING'));
 
   const presentRequiredDoor = validateWithCatalog('present-required-door', mission({
-    markers: [{ id: 'door-required', type: 'door', tile: 'tile-1', anchor: '1r-door-required', x: .333, y: .833, label: 'D' }]
+    markers: [{ id: 'door-required', type: 'door-blue', tile: 'tile-1', anchor: '1r-door-required', x: .333, y: .833, label: 'PB', open: true }]
   }), requiredDoorCatalog);
   assert.equal(presentRequiredDoor.status, 0);
   assert.equal(presentRequiredDoor.output.valid, true);
+
+  const duplicateColoredDoors = validateWithCatalog('duplicate-colored-doors', mission({
+    markers: [
+      { id: 'door-blue', type: 'door-blue', tile: 'tile-1', anchor: '1r-door-required', x: .333, y: .833, label: 'PB' },
+      { id: 'door-green', type: 'door-green', tile: 'tile-1', anchor: '1r-door-required', x: .333, y: .833, label: 'PV' }
+    ]
+  }), requiredDoorCatalog);
+  assert.equal(duplicateColoredDoors.status, 2);
+  assert.ok(duplicateColoredDoors.output.errors.some(error => error.code === 'DOOR_CONNECTION_DUPLICATE'));
+
+  const invalidDoorState = validate('invalid-door-state', mission({
+    markers: [{ id: 'door-invalid-state', type: 'door', tile: 'tile-1', x: .2, y: .2, label: 'D', open: 'yes' }]
+  }));
+  assert.equal(invalidDoorState.status, 2);
+  assert.ok(invalidDoorState.output.errors.some(error => error.code === 'DOOR_STATE'));
 
   const largeInteriorCatalog = {
     format: 'zombicide-catalog',
