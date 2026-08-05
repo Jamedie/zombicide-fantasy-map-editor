@@ -232,27 +232,46 @@ try {
   const requiredDoorCatalog = {
     format: 'zombicide-catalog',
     version: 2,
-    tiles: [{
-      id: '1r',
-      slots: [{ id: '1r-door-required', type: 'door', x: .333, y: .833, orientation: 'vertical', requiresDoor: true }]
-    }]
+    tiles: [
+      {
+        id: '1r',
+        slots: [{ id: '1r-door-required', type: 'door', x: .98, y: .5, orientation: 'vertical', requiresDoor: true }]
+      },
+      {
+        id: '2r',
+        slots: [{ id: '2r-door-opposite', type: 'door', x: .02, y: .5, orientation: 'vertical' }]
+      }
+    ]
   };
-  const missingRequiredDoor = validateWithCatalog('missing-required-door', mission(), requiredDoorCatalog);
+  const danglingRequiredDoor = validateWithCatalog('dangling-required-door', mission(), requiredDoorCatalog);
+  assert.equal(danglingRequiredDoor.status, 0);
+  assert.ok(!danglingRequiredDoor.output.errors.some(error => error.code === 'REQUIRED_DOOR_MISSING'));
+
+  const connectedDoorMission = mission({
+    grid: { columns: 2, rows: 1 },
+    tiles: [
+      { instanceId: 'tile-1', catalogId: '1r', code: '1R', face: 'R', column: 0, row: 0, rotation: 0, customDoorAnchors: [] },
+      { instanceId: 'tile-2', catalogId: '2r', code: '2R', face: 'R', column: 1, row: 0, rotation: 0, customDoorAnchors: [] }
+    ]
+  });
+  const missingRequiredDoor = validateWithCatalog('missing-required-door', connectedDoorMission, requiredDoorCatalog);
   assert.equal(missingRequiredDoor.status, 2);
   assert.ok(missingRequiredDoor.output.errors.some(error => error.code === 'REQUIRED_DOOR_MISSING'));
 
-  const presentRequiredDoor = validateWithCatalog('present-required-door', mission({
-    markers: [{ id: 'door-required', type: 'door-blue', tile: 'tile-1', anchor: '1r-door-required', x: .333, y: .833, label: 'PB', open: true }]
-  }), requiredDoorCatalog);
+  const presentRequiredDoor = validateWithCatalog('present-required-door', {
+    ...connectedDoorMission,
+    markers: [{ id: 'door-required', type: 'door-blue', tile: 'tile-1', anchor: '1r-door-required', x: .98, y: .5, label: 'PB', open: true }]
+  }, requiredDoorCatalog);
   assert.equal(presentRequiredDoor.status, 0);
   assert.equal(presentRequiredDoor.output.valid, true);
 
-  const duplicateColoredDoors = validateWithCatalog('duplicate-colored-doors', mission({
+  const duplicateColoredDoors = validateWithCatalog('duplicate-colored-doors', {
+    ...connectedDoorMission,
     markers: [
-      { id: 'door-blue', type: 'door-blue', tile: 'tile-1', anchor: '1r-door-required', x: .333, y: .833, label: 'PB' },
-      { id: 'door-green', type: 'door-green', tile: 'tile-1', anchor: '1r-door-required', x: .333, y: .833, label: 'PV' }
+      { id: 'door-blue', type: 'door-blue', tile: 'tile-1', anchor: '1r-door-required', x: .98, y: .5, label: 'PB' },
+      { id: 'door-green', type: 'door-green', tile: 'tile-1', anchor: '1r-door-required', x: .98, y: .5, label: 'PV' }
     ]
-  }), requiredDoorCatalog);
+  }, requiredDoorCatalog);
   assert.equal(duplicateColoredDoors.status, 2);
   assert.ok(duplicateColoredDoors.output.errors.some(error => error.code === 'DOOR_CONNECTION_DUPLICATE'));
 

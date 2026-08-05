@@ -195,14 +195,6 @@ function duplicateDoorConnections() {
   }
   return duplicates;
 }
-function missingRequiredDoors() {
-  return mission.tiles.flatMap(tile =>
-    tileAnchors(tile)
-      .filter(anchor => anchor.requiresDoor)
-      .filter(anchor => !doorMarkerAtConnection(tile, anchor))
-      .map(anchor => ({ tile, anchor }))
-  );
-}
 function missingInteriorSeparators() {
   return mission.tiles.flatMap(tile => {
     const configuration = catalogConfiguration(tile.catalogId);
@@ -504,7 +496,6 @@ function renderWarnings() {
   });
   const duplicates = duplicatePhysicalTiles(mission.tiles);
   const duplicateDoors = duplicateDoorConnections();
-  const requiredDoors = missingRequiredDoors();
   const interiorSeparators = missingInteriorSeparators();
   const messages = [];
   if (issues.length) messages.push(`<strong>${issues.length} tuile${issues.length > 1 ? 's' : ''} indisponible${issues.length > 1 ? 's' : ''}</strong> dans « ${esc(profile().name)} » : ${issues.map(tile => esc(catalogTile(tile.catalogId)?.code || tile.catalogId)).join(', ')}.`);
@@ -512,7 +503,6 @@ function renderWarnings() {
   if (markerLimitIssues.length) messages.push(`<strong>Limite de tokens dépassée</strong> : ${markerLimitIssues.map(([type, count]) => `${esc(markerType(type)?.name || type)} ${count}/${markerLimit(type)}`).join(', ')}.`);
   if (duplicates.length) messages.push(`<strong>Doublon interdit</strong> : ${duplicates.map(([first, second]) => `${esc(catalogTile(first.catalogId)?.code || first.code)} / ${esc(catalogTile(second.catalogId)?.code || second.code)}`).join(', ')}. Les faces R et V comptent comme la même tuile.`);
   if (duplicateDoors.length) messages.push(`<strong>Connexion de porte en double</strong> : deux marqueurs utilisent la même jonction entre tuiles.`);
-  if (requiredDoors.length) messages.push(`<strong>Porte obligatoire manquante</strong> : ${requiredDoors.map(({ tile, anchor }) => `${esc(catalogTile(tile.catalogId)?.code || tile.code)} ${esc(anchor.id)}`).join(', ')}.`);
   if (interiorSeparators.length) messages.push(`<strong>Intérieur trop grand</strong> : ${interiorSeparators.map(({ tile, zone }) => `${esc(catalogTile(tile.catalogId)?.code || tile.code)} ${esc(zone.label || zone.id)}`).join(', ')} doit être séparé par une porte.`);
   const bar = document.querySelector('#warning-bar'); bar.hidden = messages.length === 0;
   bar.innerHTML = messages.length ? `⚠ ${messages.join(' ')}` : '';

@@ -69,7 +69,8 @@ Un marqueur peut aussi exposer `colors` pour représenter plusieurs couleurs sur
 - Deux slots opposés sur la séparation de deux tuiles représentent une seule connexion logique.
 - Une connexion logique ne peut contenir qu’une seule porte ancrée, même si chaque tuile possède son propre slot.
 - Une porte libre ne contient pas d’`anchor` et utilise directement ses coordonnées normalisées.
-- Un slot `door` de catalogue peut porter `requiresDoor: true`. Ce cas représente une ouverture imprimée d’une Zone de bâtiment vers l’extérieur ou vers une rue, comme une porte ouverte visible sur l’illustration. Toute mission qui utilise cette tuile doit alors placer un marqueur `door` sur cette connexion logique.
+- Un slot `door` de catalogue peut porter `requiresDoor: true`. Ce cas représente une ouverture imprimée d’une Zone de bâtiment vers l’extérieur ou vers une rue, comme une porte ouverte visible sur l’illustration.
+- Ce contrôle est effectué uniquement par la validation CLI, pas par l’éditeur manuel. Un slot intérieur est toujours contrôlé. Sur le bord d’une tuile, le contrôle ne s’active que si une ouverture correspondante existe sur la tuile voisine ; une ouverture donnant sur le vide ou sans raccordement n’exige aucune porte.
 - Une porte requise par `requiresDoor: true` doit rester ancrée à un slot de la connexion concernée ; un marqueur libre proche visuellement ne suffit pas.
 
 ## Taille des intérieurs
