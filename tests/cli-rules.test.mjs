@@ -72,9 +72,10 @@ try {
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'invasion-eternal-empire-5' && marker.product === 'eternal-empire' && marker.limit === 1 && marker.image));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'door-blue' && marker.product === 'black-plague' && marker.limit === 1 && marker.image && marker.imageOpen));
   assert.ok(context.constraints.markerCatalog.some(marker => marker.type === 'door-green' && marker.product === 'black-plague' && marker.limit === 1 && marker.image && marker.imageOpen));
-  for (const cryptDoorType of ['vault-door-purple-entry', 'vault-door-yellow-entry', 'vault-door-purple-exit', 'vault-door-yellow-exit']) {
+  for (const cryptDoorType of ['vault-door-purple-entry', 'vault-door-yellow-entry']) {
     assert.ok(context.constraints.markerCatalog.some(marker => marker.type === cryptDoorType && marker.product === 'black-plague' && marker.limit === 2 && marker.image && marker.imageOpen));
   }
+  assert.ok(!context.constraints.markerCatalog.some(marker => ['vault-door-purple-exit', 'vault-door-yellow-exit'].includes(marker.type)));
   for (const removedType of ['first-player', 'magic-dome', 'dragon-fire', 'locator-1', 'locator-2', 'area-blue', 'area-red', 'extra-action']) {
     assert.ok(!context.constraints.markerCatalog.some(marker => marker.type === removedType));
   }

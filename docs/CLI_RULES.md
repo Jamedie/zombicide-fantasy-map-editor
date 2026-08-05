@@ -51,7 +51,7 @@ Types reconnus :
 
 Types génériques : `start`, `objective`, `objective-blue`, `objective-green`, `invasion`, `invasion-blue`, `invasion-green`, `invasion-necromancer-beige`, `invasion-necromancer-brown`, `invasion-necromancer-green`, `invasion-necromancer-grey`, `invasion-necromancer-purple`, `invasion-necromancer-turquoise`, `exit`, `door`, `spawn`, `npc`, `vault`, `noise`, `dragon-bile`, `gate` et `rubble`.
 
-Types liés aux boîtes : `door-blue`, `door-green`, `vault-door-purple-entry`, `vault-door-yellow-entry`, `vault-door-purple-exit`, `vault-door-yellow-exit`, `crypt`, `crypt-yellow`, `rotten`, `barrier`, `hedge`, `horde`, `trebuchet`, `orc-abomination`, `orc-fatty`, `orc-necromancer`, `orc-runner`, `orc-walker`, `familiar-cat`, `familiar-dog`, `familiar-wolf`, `tainted-abomination`, `tainted-walker`, `ballista`, `necromantic-dragon`, `ratz`, `spectral-walker`, `start-white-death`, `exit-white-death`, `invasion-white-death-1`, `invasion-white-death-2`, `invasion-white-death-3`, `invasion-white-death-4`, `invasion-white-death-defiler`, `white-death-flag-zone`, `white-death-rope-ladder`, `white-death-cauldron`, `white-death-beacon`, `white-death-noise`, `white-death-corruption`, `white-death-objective-red`, `white-death-objective-green`, `white-death-objective-blue`, `guard`, `invasion-eternal-empire-5` et `statue`.
+Types liés aux boîtes : `door-blue`, `door-green`, `vault-door-purple-entry`, `vault-door-yellow-entry`, `crypt`, `crypt-yellow`, `rotten`, `barrier`, `hedge`, `horde`, `trebuchet`, `orc-abomination`, `orc-fatty`, `orc-necromancer`, `orc-runner`, `orc-walker`, `familiar-cat`, `familiar-dog`, `familiar-wolf`, `tainted-abomination`, `tainted-walker`, `ballista`, `necromantic-dragon`, `ratz`, `spectral-walker`, `start-white-death`, `exit-white-death`, `invasion-white-death-1`, `invasion-white-death-2`, `invasion-white-death-3`, `invasion-white-death-4`, `invasion-white-death-defiler`, `white-death-flag-zone`, `white-death-rope-ladder`, `white-death-cauldron`, `white-death-beacon`, `white-death-noise`, `white-death-corruption`, `white-death-objective-red`, `white-death-objective-green`, `white-death-objective-blue`, `guard`, `invasion-eternal-empire-5` et `statue`.
 
 Chaque marqueur référence une instance de tuile existante. Un identifiant de point d’ancrage reste technique : l’interface peut n’afficher que son mode de placement, mais le JSON conserve l’identifiant exact.
 
@@ -61,7 +61,7 @@ Un marqueur peut aussi exposer `colors` pour représenter plusieurs couleurs sur
 
 ## Portes
 
-- `door`, `door-blue`, `door-green`, `vault-door-purple-entry`, `vault-door-yellow-entry`, `vault-door-purple-exit` et `vault-door-yellow-exit` sont tous des types de portes et suivent les mêmes règles d’ancrage et d’unicité de connexion.
+- `door`, `door-blue`, `door-green`, `vault-door-purple-entry` et `vault-door-yellow-entry` sont tous des types de portes et suivent les mêmes règles d’ancrage et d’unicité de connexion.
 - Une porte peut contenir `open: true` pour utiliser son côté ouvert ou `open: false` pour utiliser son côté fermé. Sans valeur, elle est fermée par défaut.
 - Les slots du catalogue sont préférés, mais le placement libre est autorisé par la politique `doorPlacement: catalog-preferred`.
 - Une porte ancrée doit référencer un slot `door` de sa tuile ou un slot personnalisé de l’instance.
