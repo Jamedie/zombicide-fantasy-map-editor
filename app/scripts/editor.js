@@ -28,6 +28,43 @@ let selected = null;
 let targetedCell = null;
 let zoom = .85;
 let markerDrag = null;
+let tutorialStep = 0;
+
+const TUTORIAL_STEPS = [
+  { image: 'assets/images/tutorial/Tutorial-1.png', title: 'Préparez votre collection', copy: 'Dans l’onglet Collection, cochez les boîtes que vous possédez. La bibliothèque n’affichera que les tuiles et marqueurs réellement disponibles.' },
+  { image: 'assets/images/tutorial/Tutorial-2.png', title: 'Composez le plateau', copy: 'Cliquez sur une tuile pour l’ajouter à la première case libre, ou faites-la glisser vers une case précise. Ajustez ensuite la taille de la grille.' },
+  { image: 'assets/images/tutorial/Tutorial-3.png', title: 'Placez les marqueurs', copy: 'Ouvrez l’onglet Marqueurs, puis cliquez sur un élément pour le poser. Les portes et marqueurs compatibles s’aimantent aux emplacements prévus.' },
+  { image: 'assets/images/tutorial/Tutorial-4.png', title: 'Ajustez dans l’inspecteur', copy: 'Sélectionnez une tuile pour la tourner, ou un marqueur pour modifier son libellé et sa position. Vous pouvez aussi les déplacer directement sur le plateau.' },
+  { image: 'assets/images/tutorial/Tutorial-5.png', title: 'Sauvegardez et exportez', copy: 'Mission JSON conserve une version modifiable de votre quête. Exporter PNG produit le plan prêt à partager ou à imprimer.' }
+];
+
+function renderTutorial() {
+  const step = TUTORIAL_STEPS[tutorialStep];
+  document.querySelector('#tutorial-steps').innerHTML = TUTORIAL_STEPS.map((_, index) => `<span class="tutorial-step ${index === tutorialStep ? 'active' : index < tutorialStep ? 'done' : ''}"></span>`).join('');
+  const visual = document.querySelector('#tutorial-visual');
+  const image = document.createElement('img');
+  image.src = step.image;
+  image.alt = '';
+  visual.replaceChildren(image);
+  document.querySelector('#tutorial-counter').textContent = `ÉTAPE ${tutorialStep + 1} SUR ${TUTORIAL_STEPS.length}`;
+  document.querySelector('#tutorial-title').textContent = step.title;
+  document.querySelector('#tutorial-copy').textContent = step.copy;
+  document.querySelector('#tutorial-previous').hidden = tutorialStep === 0;
+  document.querySelector('#tutorial-next').textContent = tutorialStep === TUTORIAL_STEPS.length - 1 ? 'Créer ma quête' : 'Suivant';
+}
+
+function openTutorial() {
+  tutorialStep = 0;
+  renderTutorial();
+  document.querySelector('#tutorial-modal').hidden = false;
+  document.querySelector('#tutorial-next').focus();
+}
+
+function closeTutorial() {
+  document.querySelector('#tutorial-modal').hidden = true;
+  storage.set('zombicide-tutorial-seen', true);
+  document.querySelector('#open-tutorial').focus();
+}
 
 function newCollection(name) {
   return { format: 'zombicide-collection', version: 1, name, ownedProducts: ['black-plague'], tileWhitelist: [], tileBlacklist: [] };
@@ -750,6 +787,14 @@ function missionSvg() {
 }
 
 document.querySelector('#tile-search').addEventListener('input', renderLibrary);
+document.querySelector('#open-tutorial').addEventListener('click', openTutorial);
+document.querySelectorAll('[data-close-tutorial]').forEach(node => node.addEventListener('click', closeTutorial));
+document.querySelector('#tutorial-previous').addEventListener('click', () => { tutorialStep = Math.max(0, tutorialStep - 1); renderTutorial(); });
+document.querySelector('#tutorial-next').addEventListener('click', () => {
+  if (tutorialStep === TUTORIAL_STEPS.length - 1) return closeTutorial();
+  tutorialStep += 1;
+  renderTutorial();
+});
 document.querySelector('#show-unavailable').addEventListener('change', renderLibrary);
 document.querySelector('#tile-library').addEventListener('dragstart', event => { const card = event.target.closest('[data-catalog-id]'); if (card && !card.classList.contains('unavailable')) event.dataTransfer.setData('catalogId', card.dataset.catalogId); });
 document.querySelector('#tile-library').addEventListener('click', event => { const card = event.target.closest('[data-catalog-id]'); if (card && !event.target.closest('select')) addTile(card.dataset.catalogId); });
@@ -843,7 +888,7 @@ document.querySelector('#marker-anchor').addEventListener('change', event => {
 });
 document.querySelector('#show-tile-names').addEventListener('change', event => { mission.render.showTileNames = event.target.checked; render(); });
 document.querySelector('#show-legend').addEventListener('change', event => { mission.render.showLegend = event.target.checked; render(); });
-document.addEventListener('keydown', event => { if (/input|select|textarea/i.test(event.target.tagName)) return; const current = item(); if (!current) return; if (event.key.toLowerCase() === 'r' && selected.kind === 'tile') return rotateTile(90); if (['Delete', 'Backspace'].includes(event.key)) return selected.kind === 'tile' ? document.querySelector('#delete-selected').click() : document.querySelector('#delete-marker').click(); if (selected.kind === 'marker' && event.key.startsWith('Arrow')) { event.preventDefault(); current.x = clamp(current.x + (event.key === 'ArrowLeft' ? -.01 : event.key === 'ArrowRight' ? .01 : 0), 0, 1); current.y = clamp(current.y + (event.key === 'ArrowUp' ? -.01 : event.key === 'ArrowDown' ? .01 : 0), 0, 1); current.anchor = undefined; render(); } });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !document.querySelector('#tutorial-modal').hidden) return closeTutorial(); if (/input|select|textarea/i.test(event.target.tagName)) return; const current = item(); if (!current) return; if (event.key.toLowerCase() === 'r' && selected.kind === 'tile') return rotateTile(90); if (['Delete', 'Backspace'].includes(event.key)) return selected.kind === 'tile' ? document.querySelector('#delete-selected').click() : document.querySelector('#delete-marker').click(); if (selected.kind === 'marker' && event.key.startsWith('Arrow')) { event.preventDefault(); current.x = clamp(current.x + (event.key === 'ArrowLeft' ? -.01 : event.key === 'ArrowRight' ? .01 : 0), 0, 1); current.y = clamp(current.y + (event.key === 'ArrowUp' ? -.01 : event.key === 'ArrowDown' ? .01 : 0), 0, 1); current.anchor = undefined; render(); } });
 
 document.querySelector('#new-map').addEventListener('click', () => { if (mission.tiles.length && !confirm('Créer une nouvelle mission ? La sauvegarde locale actuelle sera remplacée.')) return; mission = newMission(); selected = null; targetedCell = null; render(); });
 document.querySelector('#export-json').addEventListener('click', () => { const clean = JSON.parse(JSON.stringify(mission)); download(`${safeName(mission.name)}.json`, JSON.stringify(clean, null, 2), 'application/json'); toast('Mission JSON exportée.'); });
@@ -864,6 +909,7 @@ async function initialize() {
     console.warn('Configuration par défaut indisponible. Lancez le projet avec npm run dev.');
   }
   render();
+  if (!storage.get('zombicide-tutorial-seen', false)) openTutorial();
 }
 
 initialize();

@@ -11,13 +11,30 @@
     <header class="topbar">
       <div class="brand">
         <span class="brand-mark">Z</span>
-        <div><p class="eyebrow">ZOMBICIDE FANTASY</p><h1>Forge de Quêtes</h1></div>
+        <div>
+          <p class="eyebrow">ZOMBICIDE FANTASY</p>
+          <h1>Forge de Quêtes</h1>
+        </div>
         <span class="mvp-badge">MVP</span>
       </div>
       <div class="document-actions">
+        <button
+          id="open-tutorial"
+          class="help-button ghost"
+          aria-haspopup="dialog"
+          aria-label="Ouvrir le tutoriel"
+          title="Tutoriel"
+        >
+          ?
+        </button>
         <button id="new-map" class="ghost">Nouveau</button>
         <label class="button ghost" for="import-mission">Ouvrir</label>
-        <input id="import-mission" type="file" accept="application/json,.json" hidden />
+        <input
+          id="import-mission"
+          type="file"
+          accept="application/json,.json"
+          hidden
+        />
         <button id="export-json" class="ghost">Mission JSON</button>
         <button id="export-image" class="primary">Exporter PNG</button>
       </div>
@@ -34,45 +51,138 @@
         </div>
 
         <section class="tab-panel active" data-panel="tiles">
-          <div class="panel-title"><div><p class="kicker">BIBLIOTHÈQUE</p><h2>Tuiles disponibles</h2></div><span id="tile-count" class="count"></span></div>
-          <p class="panel-help">Cliquez pour ajouter dans la première case libre, ou glissez vers une case précise.</p>
-          <div class="search-wrap"><span>⌕</span><input id="tile-search" type="search" placeholder="Numéro, boîte ou face…" /></div>
-          <label class="check-row"><input id="show-unavailable" type="checkbox" /> Afficher les indisponibles</label>
+          <div class="panel-title">
+            <div>
+              <p class="kicker">BIBLIOTHÈQUE</p>
+              <h2>Tuiles disponibles</h2>
+            </div>
+            <span id="tile-count" class="count"></span>
+          </div>
+          <p class="panel-help">
+            Cliquez pour ajouter dans la première case libre, ou glissez vers
+            une case précise.
+          </p>
+          <div class="search-wrap">
+            <span>⌕</span
+            ><input
+              id="tile-search"
+              type="search"
+              placeholder="Numéro, boîte ou face…"
+            />
+          </div>
+          <label class="check-row"
+            ><input id="show-unavailable" type="checkbox" /> Afficher les
+            indisponibles</label
+          >
           <div id="tile-library" class="tile-library"></div>
-          <label class="import-tile" for="import-tile-images"><span>＋</span><strong>Importer des visuels</strong><small>PNG ou JPEG — ajoutés au catalogue local</small></label>
-          <input id="import-tile-images" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden />
+          <label class="import-tile" for="import-tile-images"
+            ><span>＋</span><strong>Importer des visuels</strong
+            ><small>PNG ou JPEG — ajoutés au catalogue local</small></label
+          >
+          <input
+            id="import-tile-images"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            multiple
+            hidden
+          />
         </section>
 
         <section class="tab-panel" data-panel="markers">
-          <div class="panel-title"><div><p class="kicker">PALETTE</p><h2>Marqueurs de mission</h2></div></div>
-          <p class="panel-help">Cliquez sur un marqueur pour le poser automatiquement selon son type. Vous pourrez ensuite choisir un point d’accroche ou un placement libre.</p>
+          <div class="panel-title">
+            <div>
+              <p class="kicker">PALETTE</p>
+              <h2>Marqueurs de mission</h2>
+            </div>
+          </div>
+          <p class="panel-help">
+            Cliquez sur un marqueur pour le poser automatiquement selon son
+            type. Vous pourrez ensuite choisir un point d’accroche ou un
+            placement libre.
+          </p>
           <div id="marker-library" class="marker-library"></div>
-          <div class="tip"><strong>Portes aimantées</strong><span>Les portes s’accrochent aux points définis dans l’éditeur de tuiles de l’onglet Collection.</span></div>
+          <div class="tip">
+            <strong>Portes aimantées</strong
+            ><span
+              >Les portes s’accrochent aux points définis dans l’éditeur de
+              tuiles de l’onglet Collection.</span
+            >
+          </div>
         </section>
 
         <section class="tab-panel" data-panel="collection">
-          <div class="panel-title"><div><p class="kicker">PROFIL</p><h2>Ma collection</h2></div></div>
-          <div class="profile-row"><select id="profile-select"></select><button id="new-profile" title="Nouveau profil">＋</button><button id="delete-profile" title="Supprimer le profil">×</button></div>
-          <p class="panel-help">Les boîtes cochées rendent leurs tuiles disponibles. Les exceptions ont priorité.</p>
+          <div class="panel-title">
+            <div>
+              <p class="kicker">PROFIL</p>
+              <h2>Ma collection</h2>
+            </div>
+          </div>
+          <div class="profile-row">
+            <select id="profile-select"></select
+            ><button id="new-profile" title="Nouveau profil">＋</button
+            ><button id="delete-profile" title="Supprimer le profil">×</button>
+          </div>
+          <p class="panel-help">
+            Les boîtes cochées rendent leurs tuiles disponibles. Les exceptions
+            ont priorité.
+          </p>
           <div id="product-list" class="product-list"></div>
           <div class="collection-actions">
-            <button id="reset-exceptions" class="ghost">Réinitialiser les exceptions</button>
+            <button id="reset-exceptions" class="ghost">
+              Réinitialiser les exceptions
+            </button>
             <button id="export-collection" class="ghost">Exporter</button>
             <label class="button ghost" for="import-collection">Importer</label>
-            <input id="import-collection" type="file" accept="application/json,.json" hidden />
+            <input
+              id="import-collection"
+              type="file"
+              accept="application/json,.json"
+              hidden
+            />
           </div>
-          <div class="priority-note"><strong>Priorité</strong><span>Liste noire → liste blanche → boîtes possédées</span></div>
-          <a class="catalog-page-link" href="catalog.html"><span>⌑</span><div><strong>Ouvrir l’éditeur de catalogue</strong><small>Configurer les slots autorisés pour chaque tuile</small></div><b>→</b></a>
+          <div class="priority-note">
+            <strong>Priorité</strong
+            ><span>Liste noire → liste blanche → boîtes possédées</span>
+          </div>
+          <a class="catalog-page-link" href="catalog.html"
+            ><span>⌑</span>
+            <div>
+              <strong>Ouvrir l’éditeur de catalogue</strong
+              ><small>Configurer les slots autorisés pour chaque tuile</small>
+            </div>
+            <b>→</b></a
+          >
         </section>
       </aside>
 
       <section class="workspace">
         <div class="mission-toolbar">
-          <label class="mission-name"><span>MISSION</span><input id="mission-name" value="Nouvelle quête" maxlength="70" /></label>
+          <label class="mission-name"
+            ><span>MISSION</span
+            ><input id="mission-name" value="Nouvelle quête" maxlength="70"
+          /></label>
           <div class="toolbar-divider"></div>
-          <label>Colonnes <select id="grid-columns"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
-          <label>Lignes <select id="grid-rows"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
-          <button id="zoom-out" class="icon-button" title="Dézoomer">−</button><span id="zoom-label">85%</span><button id="zoom-in" class="icon-button" title="Zoomer">＋</button>
+          <label
+            >Colonnes
+            <select id="grid-columns">
+              <option>1</option>
+              <option>2</option>
+              <option selected>3</option>
+              <option>4</option>
+            </select></label
+          >
+          <label
+            >Lignes
+            <select id="grid-rows">
+              <option>1</option>
+              <option selected>2</option>
+              <option>3</option>
+              <option>4</option>
+            </select></label
+          >
+          <button id="zoom-out" class="icon-button" title="Dézoomer">−</button
+          ><span id="zoom-label">85%</span
+          ><button id="zoom-in" class="icon-button" title="Zoomer">＋</button>
         </div>
 
         <div class="canvas-scroller">
@@ -80,37 +190,153 @@
             <div id="board" class="board" aria-label="Plateau de mission"></div>
           </div>
         </div>
-        <div class="statusbar"><span id="mission-status">Mission vide</span><span id="placement-status">Cliquez une case vide pour la cibler • Sans cible, la première case libre est utilisée</span></div>
+        <div class="statusbar">
+          <span id="mission-status">Mission vide</span
+          ><span id="placement-status"
+            >Cliquez une case vide pour la cibler • Sans cible, la première case
+            libre est utilisée</span
+          >
+        </div>
       </section>
 
       <aside class="sidebar inspector">
-        <div class="panel-title"><div><p class="kicker">INSPECTEUR</p><h2>Propriétés</h2></div></div>
-        <div id="empty-inspector" class="empty-inspector"><div>⌁</div><strong>Aucune sélection</strong><span>Sélectionnez une tuile ou un marqueur sur le plateau.</span></div>
+        <div class="panel-title">
+          <div>
+            <p class="kicker">INSPECTEUR</p>
+            <h2>Propriétés</h2>
+          </div>
+        </div>
+        <div id="empty-inspector" class="empty-inspector">
+          <div>⌁</div>
+          <strong>Aucune sélection</strong
+          ><span>Sélectionnez une tuile ou un marqueur sur le plateau.</span>
+        </div>
         <div id="tile-inspector" hidden>
-          <div class="selection-card"><div id="selected-tile-thumb" class="mini-tile"></div><div><strong id="selected-tile-name"></strong><span id="selected-tile-product"></span></div></div>
-          <label>Rotation<select id="tile-rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
-          <div class="button-grid"><button id="rotate-left" class="ghost">↶ −90°</button><button id="rotate-right" class="ghost">↷ +90°</button></div>
-          <button id="replace-tile" class="wide-button ghost">Proposer un remplacement</button>
-          <button id="delete-selected" class="wide-button danger">Supprimer la tuile</button>
+          <div class="selection-card">
+            <div id="selected-tile-thumb" class="mini-tile"></div>
+            <div>
+              <strong id="selected-tile-name"></strong
+              ><span id="selected-tile-product"></span>
+            </div>
+          </div>
+          <label
+            >Rotation<select id="tile-rotation">
+              <option value="0">0°</option>
+              <option value="90">90°</option>
+              <option value="180">180°</option>
+              <option value="270">270°</option>
+            </select></label
+          >
+          <div class="button-grid">
+            <button id="rotate-left" class="ghost">↶ −90°</button
+            ><button id="rotate-right" class="ghost">↷ +90°</button>
+          </div>
+          <button id="replace-tile" class="wide-button ghost">
+            Proposer un remplacement
+          </button>
+          <button id="delete-selected" class="wide-button danger">
+            Supprimer la tuile
+          </button>
         </div>
         <div id="marker-inspector" hidden>
-          <div class="selection-card marker-selection"><span id="selected-marker-icon"></span><div><strong id="selected-marker-name"></strong><span id="selected-marker-meta">Marqueur de mission</span></div></div>
+          <div class="selection-card marker-selection">
+            <span id="selected-marker-icon"></span>
+            <div>
+              <strong id="selected-marker-name"></strong
+              ><span id="selected-marker-meta">Marqueur de mission</span>
+            </div>
+          </div>
           <label>Libellé<input id="marker-label" maxlength="12" /></label>
-          <label>Position X (%)<input id="marker-x" type="number" min="0" max="100" step="1" /></label>
-          <label>Position Y (%)<input id="marker-y" type="number" min="0" max="100" step="1" /></label>
-          <label id="door-state-field" hidden>État de la porte<select id="marker-open"><option value="closed">Fermée</option><option value="open">Ouverte</option></select></label>
-          <label id="anchor-field">Point d’accroche<select id="marker-anchor"></select></label>
-          <button id="delete-marker" class="wide-button danger">Supprimer le marqueur</button>
+          <label
+            >Position X (%)<input
+              id="marker-x"
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+          /></label>
+          <label
+            >Position Y (%)<input
+              id="marker-y"
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+          /></label>
+          <label id="door-state-field" hidden
+            >État de la porte<select id="marker-open">
+              <option value="closed">Fermée</option>
+              <option value="open">Ouverte</option>
+            </select></label
+          >
+          <label id="anchor-field"
+            >Point d’accroche<select id="marker-anchor"></select
+          ></label>
+          <button id="delete-marker" class="wide-button danger">
+            Supprimer le marqueur
+          </button>
         </div>
 
         <section class="legend-section">
-          <div class="panel-title compact"><div><p class="kicker">APERÇU</p><h2>Légende automatique</h2></div></div>
+          <div class="panel-title compact">
+            <div>
+              <p class="kicker">APERÇU</p>
+              <h2>Légende automatique</h2>
+            </div>
+          </div>
           <div id="legend" class="legend"></div>
-          <label class="check-row"><input id="show-tile-names" type="checkbox" checked /> Références des tuiles</label>
-          <label class="check-row"><input id="show-legend" type="checkbox" checked /> Légende dans l’export</label>
+          <label class="check-row"
+            ><input id="show-tile-names" type="checkbox" checked /> Références
+            des tuiles</label
+          >
+          <label class="check-row"
+            ><input id="show-legend" type="checkbox" checked /> Légende dans
+            l’export</label
+          >
         </section>
       </aside>
     </main>
+
+    <div id="tutorial-modal" class="tutorial-modal" hidden>
+      <div class="tutorial-backdrop" data-close-tutorial></div>
+      <section
+        class="tutorial-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tutorial-title"
+      >
+        <button
+          class="tutorial-close"
+          type="button"
+          data-close-tutorial
+          aria-label="Fermer le tutoriel"
+        >
+          ×
+        </button>
+        <p class="kicker">PRISE EN MAIN</p>
+        <div
+          id="tutorial-steps"
+          class="tutorial-steps"
+          aria-label="Progression du tutoriel"
+        ></div>
+        <div
+          id="tutorial-visual"
+          class="tutorial-visual"
+          aria-hidden="true"
+        ></div>
+        <p id="tutorial-counter" class="tutorial-counter"></p>
+        <h2 id="tutorial-title"></h2>
+        <p id="tutorial-copy" class="tutorial-copy"></p>
+        <div class="tutorial-actions">
+          <button id="tutorial-previous" class="ghost" type="button">
+            Précédent
+          </button>
+          <button id="tutorial-next" class="primary" type="button">
+            Suivant
+          </button>
+        </div>
+      </section>
+    </div>
 
     <div id="toast" class="toast" hidden></div>
     <script type="module" src="scripts/editor.js"></script>
